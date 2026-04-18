@@ -123,7 +123,7 @@ body:not(.cool-mode) .splash-panel {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
-body:not(.cool-mode) .splash-panel img { mix-blend-mode: normal !important; filter: grayscale(1) brightness(0.4) !important; }
+body:not(.cool-mode) .splash-panel img { display: none !important; }
 body:not(.cool-mode) .splash-question { font-size: 1.8rem !important; color: #444 !important; font-weight: normal !important; }
 body:not(.cool-mode) .splash-yes {
   background: #b0b0aa !important; color: #222 !important;
@@ -1416,6 +1416,44 @@ body::after {
           { q: "According to Genesis 5's Masoretic chronology, how many years was Adam alive when his son Seth was born?", options: ["100", "105", "130", "150"], answer: "130" },
         ],
       },
+      'space': {
+        'hard': [
+          { q: "On the fourth day of creation in Genesis 1, God made the two great lights and also the what?", options: ["Moon alone", "Stars", "Clouds", "Winds"], answer: "Stars" },
+          { q: "In Matthew, the Magi told Herod they had seen the king's star do what?", options: ["Set in the west", "Rise", "Fall", "Eclipse"], answer: "Rise" },
+          { q: "When Joshua prayed for the sun and moon to stand still, the moon stopped over the Valley of what?", options: ["Aijalon", "Jezreel", "Elah", "Siddim"], answer: "Aijalon" },
+          { q: "Which psalm opens: 'The heavens declare the glory of God'?", options: ["Psalm 8", "Psalm 19", "Psalm 23", "Psalm 104"], answer: "Psalm 19" },
+          { q: "In Revelation 12, the dragon's tail sweeps a third of the stars out of where?", options: ["The sea", "The sky", "The temple", "The city"], answer: "The sky" },
+          { q: "God showed Abraham the stars and said his descendants would be as numerous as the what?", options: ["Grains of sand", "Stars", "Dust", "Birds"], answer: "Stars" },
+          { q: "On the road to Damascus, Paul was surrounded by a light from where?", options: ["The temple", "Heaven", "Mount Sinai", "The Jordan"], answer: "Heaven" },
+          { q: "In Mark, darkness came over the whole land from the sixth hour until the ninth—roughly how long?", options: ["One hour", "Three hours", "Six hours", "Twelve hours"], answer: "Three hours" },
+          { q: "In Job, who asks whether you can bind the chains of the Pleiades?", options: ["Elihu", "God", "Satan", "Job"], answer: "God" },
+          { q: "Under the fourth trumpet in Revelation, a third of the sun, moon, and what were struck?", options: ["Mountains", "Rivers", "Stars", "Angels"], answer: "Stars" },
+        ],
+        'really-hard': [
+          { q: "Amos 5:8 names Pleiades and Orion as made by whom?", options: ["Baal", "The Lord", "David", "Moses"], answer: "The Lord" },
+          { q: "At the sixth seal in Revelation, the moon becomes like what?", options: ["Brass", "Blood", "Fire", "Snow"], answer: "Blood" },
+          { q: "Who prophesied, 'A star shall come out of Jacob' (Numbers 24:17)?", options: ["Moses", "Balaam", "Aaron", "Joshua"], answer: "Balaam" },
+          { q: "Daniel says the wise shall shine like the stars for how long?", options: ["A thousand years", "Forever", "Forty years", "Until the exile"], answer: "Forever" },
+          { q: "Which psalm says God 'determines the number of the stars and calls them each by name'?", options: ["Psalm 91", "Psalm 119", "Psalm 147", "Psalm 150"], answer: "Psalm 147" },
+          { q: "The Hebrew word raqia underlies 'expanse' or 'firmament' especially in which opening chapter?", options: ["Genesis 1", "Psalm 23", "John 1", "Revelation 1"], answer: "Genesis 1" },
+          { q: "Jesus said that after the tribulation of those days, the powers of the heavens will be what?", options: ["Renewed", "Darkened", "Shaken", "Silent"], answer: "Shaken" },
+          { q: "In Revelation 22, Jesus calls himself the bright Morning what?", options: ["Angel", "Star", "Prophet", "King"], answer: "Star" },
+          { q: "Isaiah 40:26 says God leads out the starry host and calls them each by what?", options: ["Rank", "Name", "Tribe", "Sign"], answer: "Name" },
+          { q: "Jude compares false teachers to wandering stars, reserved for blackness of what?", options: ["Night", "Forever", "Winter", "Chaos"], answer: "Forever" },
+        ],
+        'bob-stanberry': [
+          { q: "In the Septuagint of Genesis 1, Hebrew raqia is often translated by which Greek noun meaning 'firmament'?", options: ["Ouranos", "Stere\u014dma", "Kosmos", "Aither"], answer: "Stere\u014dma" },
+          { q: "In Revelation 1:20, the seven stars in Christ's right hand are explained as what?", options: ["Seven planets", "Seven angels of the churches", "Seven seals", "Seven trumpets"], answer: "Seven angels of the churches" },
+          { q: "Under the third trumpet (Revelation 8), a burning star named Wormwood falls on what?", options: ["The sea", "A third of the rivers", "Jerusalem", "The sun"], answer: "A third of the rivers" },
+          { q: "Which New Testament book explicitly quotes the pseudepigraphon 1 Enoch (1:9)?", options: ["Acts", "Romans", "Hebrews", "Jude"], answer: "Jude" },
+          { q: "2 Peter 3:10\u201312 says the heavens will disappear with a roar and the stoicheia will be burned up\u2014often translated 'elements' or what?", options: ["Demons", "Heavenly bodies", "Angels", "Idols"], answer: "Heavenly bodies" },
+          { q: "Kepler speculated the 'star of Bethlehem' might relate to a rare conjunction of Jupiter and which bright star in Leo?", options: ["Sirius", "Regulus", "Spica", "Vega"], answer: "Regulus" },
+          { q: "In Revelation 21:1, John sees a new heaven and a new earth\u2014for the first heaven and earth had done what?", options: ["Merged", "Passed away", "Turned to glass", "Sunk into the sea"], answer: "Passed away" },
+          { q: "Job 38:31 asks who can bind the 'sweet influences' (KJV) of Pleiades\u2014Hebrew Kimah\u2014and loose whose belt?", options: ["Orion", "Ursa Major", "Draco", "Cassiopeia"], answer: "Orion" },
+          { q: "Colossians 2:8 warns against philosophy that takes you captive according to the stoicheia of the world\u2014often translated elemental spirits or what?", options: ["Stars", "Principalities", "Elements", "Angels"], answer: "Elements" },
+          { q: "Isaiah 14:12's 'Day Star / morning star' (Hebrew Helel) is traditionally connected in Christian exegesis with which figure before a fall?", options: ["Antiochus", "Herod", "Lucifer / Satan", "Nebuchadnezzar"], answer: "Lucifer / Satan" },
+        ],
+      },
     };
 
     // ─── 2. Helpers ────────────────────────────────────────────────────────────
@@ -1442,6 +1480,7 @@ body::after {
       { id: 'jesus-gospels',  label: 'Jesus & Gospels',    emoji: '\u271D\uFE0F' },
       { id: 'books-bible',    label: 'Books of the Bible', emoji: '\u{1F4D6}' },
       { id: 'numbers-facts',  label: 'Numbers & Facts',    emoji: '\u{1F522}' },
+      { id: 'space',          label: 'Space',              emoji: '\u{1F30C}' },
     ];
     const DIFFICULTIES = [
       { id: 'hard',          label: 'Hard',         tooltip: 'For serious Bible students' },

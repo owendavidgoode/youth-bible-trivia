@@ -1842,6 +1842,7 @@ body::after {
 
       document.getElementById('splash-yes')?.addEventListener('click', () => {
         try { sessionStorage.setItem('gameReady', '1'); } catch(e) {}
+        initBgMusic();
         state.phase = 'laser-reveal';
         render();
       });

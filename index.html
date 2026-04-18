@@ -33,6 +33,96 @@
   100% { background-position: 0% 50%; }
 }
 
+/* ── Cool Mode toggle ───────────────────────────────────────────────── */
+#cool-mode-wrap {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  user-select: none;
+}
+#cool-mode-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #555;
+  font-family: Arial, sans-serif;
+  transition: color 0.4s;
+}
+body.cool-mode #cool-mode-label {
+  color: var(--team1);
+  text-shadow: 0 0 10px rgba(0,229,255,0.7);
+  font-family: 'Share Tech Mono', monospace;
+}
+.cool-toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  cursor: pointer;
+}
+.cool-toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+.cool-slider {
+  position: absolute;
+  inset: 0;
+  background: #333;
+  border-radius: 24px;
+  transition: background 0.4s;
+  border: 1px solid #555;
+}
+.cool-slider::before {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  left: 2px;
+  top: 2px;
+  background: #666;
+  border-radius: 50%;
+  transition: transform 0.3s, background 0.4s, box-shadow 0.4s;
+}
+.cool-toggle input:checked + .cool-slider {
+  background: rgba(0,229,255,0.15);
+  border-color: var(--team1);
+  box-shadow: 0 0 10px rgba(0,229,255,0.4);
+}
+.cool-toggle input:checked + .cool-slider::before {
+  transform: translateX(20px);
+  background: var(--team1);
+  box-shadow: 0 0 8px rgba(0,229,255,0.9);
+}
+
+/* ── Boring mode overrides (default) ───────────────────────────────── */
+body:not(.cool-mode) {
+  background: #1c1c1c !important;
+  animation: none !important;
+  color: #ccc !important;
+  font-family: Arial, Helvetica, sans-serif !important;
+}
+body:not(.cool-mode)::after { display: none !important; }
+body:not(.cool-mode) #starfield { display: none !important; }
+body:not(.cool-mode) .terminal-bg { display: none !important; }
+body:not(.cool-mode) .splash-nebula { display: none !important; }
+body:not(.cool-mode) * {
+  font-family: Arial, Helvetica, sans-serif !important;
+  text-shadow: none !important;
+  animation: none !important;
+}
+body:not(.cool-mode) .setup-screen h1,
+body:not(.cool-mode) .score-value { font-family: Arial, Helvetica, sans-serif !important; }
+body:not(.cool-mode) .category-card:hover { box-shadow: none !important; transform: none !important; }
+body:not(.cool-mode) .splash-question { font-size: 3rem !important; color: #aaa !important; }
+body:not(.cool-mode) .splash-panel {
+  background: #2a2a2a !important;
+  border-color: #444 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+body:not(.cool-mode) .splash-yes,
+body:not(.cool-mode) .splash-no { box-shadow: none !important; }
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -1356,58 +1446,111 @@ body::after {
     }
 
     let bgMusicNodes = null;
-    let arpTimer = null;
+    let musicTimers = [];
 
     function initBgMusic() {
       if (bgMusicNodes) return;
+      if (!document.body.classList.contains('cool-mode')) return;
       const ctx = getAudioCtx();
       if (!ctx) return;
       if (ctx.state === 'suspended') ctx.resume().catch(() => {});
 
       const master = ctx.createGain();
-      master.gain.value = state.muted ? 0 : 0.08;
+      master.gain.value = state.muted ? 0 : 0.09;
       master.connect(ctx.destination);
       bgMusicNodes = { master };
 
-      // Space pad drone: 4 detuned oscillators through a slowly sweeping filter
-      [[55,'sawtooth',0.28],[110,'sawtooth',0.2],[165,'sine',0.12],[220,'sine',0.08]].forEach(([freq,type,vol],i) => {
+      // ── Compressor to keep everything glued ──
+      const comp = ctx.createDynamicsCompressor();
+      comp.threshold.value = -18; comp.knee.value = 10;
+      comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.25;
+      comp.connect(master);
+
+      function node(dest) { return dest || comp; }
+
+      // ── Bass: pulsing sawtooth sub on A1 (55Hz), synced kick-style ──
+      const bassGain = ctx.createGain();
+      bassGain.gain.value = 0.55;
+      bassGain.connect(comp);
+      const bassFilter = ctx.createBiquadFilter();
+      bassFilter.type = 'lowpass'; bassFilter.frequency.value = 280; bassFilter.Q.value = 4;
+      bassFilter.connect(bassGain);
+      const bassOsc = ctx.createOscillator();
+      bassOsc.type = 'sawtooth'; bassOsc.frequency.value = 55;
+      bassOsc.connect(bassFilter); bassOsc.start();
+
+      // Bass pulse: accent every beat (0.5s = 120bpm)
+      const BEAT = 0.5;
+      function pulseBass(t) {
+        bassGain.gain.setValueAtTime(0.7, t);
+        bassGain.gain.exponentialRampToValueAtTime(0.15, t + BEAT * 0.8);
+        musicTimers.push(setTimeout(() => pulseBass(ctx.currentTime), BEAT * 1000));
+      }
+      pulseBass(ctx.currentTime);
+
+      // ── Chord pad: Am — detuned sawtooths through filter ──
+      // A minor chord: A2 C3 E3 — two layers per note slightly detuned
+      [[110,0],[131,7],[165,-5],[220,3],[131,-8],[165,6]].forEach(([freq,detune]) => {
         const osc = ctx.createOscillator();
-        osc.type = type;
-        osc.frequency.value = freq * (1 + (i % 2 ? 0.003 : -0.002));
+        osc.type = 'sawtooth'; osc.frequency.value = freq; osc.detune.value = detune;
         const filt = ctx.createBiquadFilter();
-        filt.type = 'lowpass';
-        filt.frequency.setValueAtTime(400, ctx.currentTime);
-        filt.frequency.linearRampToValueAtTime(1100, ctx.currentTime + 14);
-        filt.frequency.linearRampToValueAtTime(400, ctx.currentTime + 30);
-        const gain = ctx.createGain();
-        gain.gain.value = vol;
-        osc.connect(filt); filt.connect(gain); gain.connect(master);
+        filt.type = 'lowpass'; filt.frequency.value = 900; filt.Q.value = 1.2;
+        // Slow filter sweep for movement
+        filt.frequency.setValueAtTime(500, ctx.currentTime);
+        filt.frequency.linearRampToValueAtTime(1400, ctx.currentTime + 8);
+        filt.frequency.linearRampToValueAtTime(500, ctx.currentTime + 20);
+        const g = ctx.createGain(); g.gain.value = 0.1;
+        osc.connect(filt); filt.connect(g); g.connect(comp);
         osc.start();
       });
 
-      // Slow arpeggio in A minor: A3 C4 D4 E4 G4 and back
-      const notes = [220, 261.6, 293.7, 329.6, 392, 329.6, 293.7, 261.6];
-      const step = 0.45;
-      const loopLen = notes.length * step;
+      // ── Lead: bright 16th-note synthwave arpeggio ──
+      // Pattern: A3 E4 A4 C5 | E4 A4 C5 E5 | repeat up/down
+      const leadPattern = [
+        220, 329.6, 440, 523.3,
+        329.6, 440, 523.3, 659.3,
+        523.3, 440, 329.6, 261.6,
+        329.6, 261.6, 220, 196,
+      ];
+      const STEP = BEAT / 2; // 16th notes at 120bpm
+      const LOOP = leadPattern.length * STEP;
 
-      function scheduleArp(t) {
-        notes.forEach((freq, i) => {
-          const at = t + i * step;
+      function scheduleLeadLoop(t) {
+        leadPattern.forEach((freq, i) => {
+          const at = t + i * STEP;
           const osc = ctx.createOscillator();
-          osc.type = 'sine';
-          osc.frequency.value = freq;
+          osc.type = 'square'; osc.frequency.value = freq;
+          const filt = ctx.createBiquadFilter();
+          filt.type = 'bandpass'; filt.frequency.value = freq * 2; filt.Q.value = 1.5;
           const g = ctx.createGain();
           g.gain.setValueAtTime(0, at);
-          g.gain.linearRampToValueAtTime(0.14, at + 0.04);
-          g.gain.exponentialRampToValueAtTime(0.001, at + 0.38);
-          osc.connect(g); g.connect(master);
-          osc.start(at);
-          osc.stop(at + 0.42);
-          osc.onended = () => { osc.disconnect(); g.disconnect(); };
+          g.gain.linearRampToValueAtTime(0.18, at + 0.015);
+          g.gain.exponentialRampToValueAtTime(0.001, at + STEP * 0.85);
+          osc.connect(filt); filt.connect(g); g.connect(comp);
+          osc.start(at); osc.stop(at + STEP);
+          osc.onended = () => { osc.disconnect(); filt.disconnect(); g.disconnect(); };
         });
-        arpTimer = setTimeout(() => scheduleArp(t + loopLen), (loopLen - 0.8) * 1000);
+        musicTimers.push(setTimeout(() => scheduleLeadLoop(ctx.currentTime), (LOOP - STEP) * 1000));
       }
-      scheduleArp(ctx.currentTime + 0.3);
+      scheduleLeadLoop(ctx.currentTime + 0.1);
+
+      // ── Hi-hat: noise bursts on every 8th note ──
+      function scheduleHat(t) {
+        const buf = ctx.createBuffer(1, ctx.sampleRate * 0.04, ctx.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1);
+        const src = ctx.createBufferSource(); src.buffer = buf;
+        const filt = ctx.createBiquadFilter();
+        filt.type = 'highpass'; filt.frequency.value = 8000;
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.12, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+        src.connect(filt); filt.connect(g); g.connect(comp);
+        src.start(t); src.stop(t + 0.05);
+        src.onended = () => { src.disconnect(); filt.disconnect(); g.disconnect(); };
+        musicTimers.push(setTimeout(() => scheduleHat(ctx.currentTime), BEAT * 500));
+      }
+      scheduleHat(ctx.currentTime + 0.1);
     }
 
     function toggleMute() {
@@ -1929,6 +2072,9 @@ body::after {
       document.getElementById('mute-btn')?.addEventListener('click', toggleMute);
 
       document.getElementById('splash-yes')?.addEventListener('click', () => {
+        // Ascending fanfare
+        [523, 659, 784, 1047].forEach((f, i) => playTone(f, 0.12, 'square', 0.3, i * 0.07));
+        setTimeout(() => playTone(1568, 0.3, 'sine', 0.35, 0), 300);
         try { sessionStorage.setItem('gameReady', '1'); } catch(e) {}
         initBgMusic();
         state.phase = 'laser-reveal';
@@ -1936,7 +2082,9 @@ body::after {
       });
 
       document.getElementById('splash-no')?.addEventListener('click', () => {
-        window.location.href = 'https://finance.yahoo.com';
+        // Sad trombone wah-wah
+        [392, 370, 349, 330, 311].forEach((f, i) => playTone(f, 0.18, 'sawtooth', 0.3, i * 0.1));
+        setTimeout(() => { window.location.href = 'https://finance.yahoo.com'; }, 700);
       });
     }
 
@@ -1955,6 +2103,32 @@ body::after {
         sf.appendChild(s);
       }
       document.body.insertBefore(sf, document.getElementById('app'));
+    })();
+
+    // ─── 13. Cool Mode toggle ─────────────────────────────────────────────────
+    (function initCoolModeToggle() {
+      const wrap = document.createElement('div');
+      wrap.id = 'cool-mode-wrap';
+      wrap.innerHTML = `
+        <span id="cool-mode-label">Cool Mode</span>
+        <label class="cool-toggle" title="Enable Cool Mode">
+          <input type="checkbox" id="cool-mode-checkbox">
+          <span class="cool-slider"></span>
+        </label>
+      `;
+      document.body.appendChild(wrap);
+
+      document.getElementById('cool-mode-checkbox').addEventListener('change', function() {
+        if (this.checked) {
+          document.body.classList.add('cool-mode');
+          initBgMusic();
+        } else {
+          document.body.classList.remove('cool-mode');
+          if (bgMusicNodes) {
+            bgMusicNodes.master.gain.value = 0;
+          }
+        }
+      });
     })();
 
     let gameReady = false;

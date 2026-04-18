@@ -1591,12 +1591,12 @@ body::after {
             <div class="reveal-team-row">
               <span class="reveal-team-name team1">${escapeHtml(t1name)}</span>
               <span class="reveal-answer-text">${t1opt !== null ? `${labels[t1opt]}: ${escapeHtml(q.shuffledOptions[t1opt])}` : '\u2014'}</span>
-              <span class="reveal-verdict ${t1correct ? 'correct' : 'wrong'}">${t1correct ? '\u2713 +1' : '\u2717 0'}</span>
+              <span class="reveal-verdict ${t1correct ? 'correct' : 'wrong'}">${t1correct ? (bothCorrect ? '\u2713 wash' : '\u2713 +1') : '\u2717 0'}</span>
             </div>
             <div class="reveal-team-row">
               <span class="reveal-team-name team2">${escapeHtml(t2name)}</span>
               <span class="reveal-answer-text">${t2opt !== null ? `${labels[t2opt]}: ${escapeHtml(q.shuffledOptions[t2opt])}` : '\u2014'}</span>
-              <span class="reveal-verdict ${t2correct ? 'correct' : 'wrong'}">${t2correct ? '\u2713 +1' : '\u2717 0'}</span>
+              <span class="reveal-verdict ${t2correct ? 'correct' : 'wrong'}">${t2correct ? (bothCorrect ? '\u2713 wash' : '\u2713 +1') : '\u2717 0'}</span>
             </div>
             <div class="result-message">${resultMsg}</div>
             <div class="lock-in-area">
@@ -1719,11 +1719,11 @@ body::after {
       const t2correct = state.teamAnswers[1] !== null && q.shuffledOptions[state.teamAnswers[1]] === q.answer;
       const bothCorrect = t1correct && t2correct;
       const noneCorrect = !t1correct && !t2correct;
-      if (t1correct) state.scores[0]++;
-      if (t2correct) state.scores[1]++;
       if (bothCorrect) {
         sfxWin();
       } else if (t1correct || t2correct) {
+        if (t1correct) state.scores[0]++;
+        if (t2correct) state.scores[1]++;
         sfxCorrect();
         sfxPoint();
       } else {
@@ -1733,15 +1733,15 @@ body::after {
       if (checkWin()) { state.phase = 'win'; render(); return; }
       state.phase = 'question-reveal';
       render();
-      if (t1correct) {
+      if (!bothCorrect && t1correct) {
         const el = document.getElementById('score-val-0');
         if (el) { void el.offsetWidth; el.classList.add('popping'); }
       }
-      if (t2correct) {
+      if (!bothCorrect && t2correct) {
         const el = document.getElementById('score-val-1');
         if (el) { void el.offsetWidth; el.classList.add('popping'); }
       }
-      if (t1correct || t2correct) {
+      if (!bothCorrect && (t1correct || t2correct)) {
         document.querySelector('.battlefield-bar')?.classList.add('battlefield-shimmer');
         document.querySelector('.battlefield-right')?.classList.add('battlefield-shimmer');
       }

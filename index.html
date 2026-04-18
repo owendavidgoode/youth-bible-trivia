@@ -1445,117 +1445,107 @@ body::after {
       [262, 330, 392, 523, 659, 784, 988, 1175].forEach((f, i) => playTone(f, 0.18, 'sine', 0.38, i * 0.09));
     }
 
-    let bgMusicNodes = null;
-    let musicTimers = [];
+    // ─── Music player ─────────────────────────────────────────────────────────
+    const MUSIC_TRACKS = {
+      splash:   'music/' + encodeURIComponent('A Seventh of Beethoveen.mp3'),
+      setup:    'music/' + encodeURIComponent('Kakariko Metro 1983 (Cover).mp3'),
+      board:    'music/' + encodeURIComponent('A Sixth of Beethoven.mp3'),
+      question: 'music/' + encodeURIComponent("Holdin' (Cisco is that you_).mp3"),
+      win:      'music/' + encodeURIComponent('vibe code ya life my dude.mp3'),
+    };
+    const MUSIC_VOL = 0.7;
+    const FADE_IN  = 1.5; // seconds
+    const FADE_OUT = 1.0;
 
-    function initBgMusic() {
-      if (bgMusicNodes) return;
-      if (!document.body.classList.contains('cool-mode')) return;
-      const ctx = getAudioCtx();
-      if (!ctx) return;
-      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+    let currentAudio    = null;
+    let currentTrackKey = null;
+    let fadeInterval    = null;
 
-      const master = ctx.createGain();
-      master.gain.value = state.muted ? 0 : 0.09;
-      master.connect(ctx.destination);
-      bgMusicNodes = { master };
-
-      // ── Compressor to keep everything glued ──
-      const comp = ctx.createDynamicsCompressor();
-      comp.threshold.value = -18; comp.knee.value = 10;
-      comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.25;
-      comp.connect(master);
-
-      function node(dest) { return dest || comp; }
-
-      // ── Bass: pulsing sawtooth sub on A1 (55Hz), synced kick-style ──
-      const bassGain = ctx.createGain();
-      bassGain.gain.value = 0.55;
-      bassGain.connect(comp);
-      const bassFilter = ctx.createBiquadFilter();
-      bassFilter.type = 'lowpass'; bassFilter.frequency.value = 280; bassFilter.Q.value = 4;
-      bassFilter.connect(bassGain);
-      const bassOsc = ctx.createOscillator();
-      bassOsc.type = 'sawtooth'; bassOsc.frequency.value = 55;
-      bassOsc.connect(bassFilter); bassOsc.start();
-
-      // Bass pulse: accent every beat (0.5s = 120bpm)
-      const BEAT = 0.5;
-      function pulseBass(t) {
-        bassGain.gain.setValueAtTime(0.7, t);
-        bassGain.gain.exponentialRampToValueAtTime(0.15, t + BEAT * 0.8);
-        musicTimers.push(setTimeout(() => pulseBass(ctx.currentTime), BEAT * 1000));
+    function trackForPhase(phase) {
+      switch (phase) {
+        case 'splash': case 'laser-reveal': return 'splash';
+        case 'setup':                       return 'setup';
+        case 'category-board':              return 'board';
+        case 'question': case 'question-reveal': return 'question';
+        case 'win':                         return 'win';
+        default:                            return 'board';
       }
-      pulseBass(ctx.currentTime);
+    }
 
-      // ── Chord pad: Am — detuned sawtooths through filter ──
-      // A minor chord: A2 C3 E3 — two layers per note slightly detuned
-      [[110,0],[131,7],[165,-5],[220,3],[131,-8],[165,6]].forEach(([freq,detune]) => {
-        const osc = ctx.createOscillator();
-        osc.type = 'sawtooth'; osc.frequency.value = freq; osc.detune.value = detune;
-        const filt = ctx.createBiquadFilter();
-        filt.type = 'lowpass'; filt.frequency.value = 900; filt.Q.value = 1.2;
-        // Slow filter sweep for movement
-        filt.frequency.setValueAtTime(500, ctx.currentTime);
-        filt.frequency.linearRampToValueAtTime(1400, ctx.currentTime + 8);
-        filt.frequency.linearRampToValueAtTime(500, ctx.currentTime + 20);
-        const g = ctx.createGain(); g.gain.value = 0.1;
-        osc.connect(filt); filt.connect(g); g.connect(comp);
-        osc.start();
+    function fadeAudio(audio, target, duration, onDone) {
+      if (fadeInterval) clearInterval(fadeInterval);
+      const start = audio.volume;
+      const steps = Math.round(duration * 25);
+      const delta = (target - start) / steps;
+      let n = 0;
+      fadeInterval = setInterval(() => {
+        n++;
+        audio.volume = Math.max(0, Math.min(1, start + delta * n));
+        if (n >= steps) {
+          clearInterval(fadeInterval);
+          fadeInterval = null;
+          audio.volume = target;
+          if (onDone) onDone();
+        }
+      }, 40);
+    }
+
+    function startTrack(key) {
+      const audio = new Audio(MUSIC_TRACKS[key]);
+      audio.volume = 0;
+      audio.addEventListener('loadedmetadata', () => {
+        // Start at a random point — each loop enters from a different section
+        if (audio.duration > 60) {
+          audio.currentTime = Math.random() * Math.min(audio.duration * 0.45, 130);
+        }
+      }, { once: true });
+      audio.addEventListener('ended', () => {
+        if (audio.duration > 60) {
+          audio.currentTime = Math.random() * Math.min(audio.duration * 0.4, 110);
+        }
+        audio.play().catch(() => {});
       });
+      currentAudio    = audio;
+      currentTrackKey = key;
+      audio.play().catch(() => {});
+      fadeAudio(audio, state.muted ? 0 : MUSIC_VOL, FADE_IN);
+    }
 
-      // ── Lead: bright 16th-note synthwave arpeggio ──
-      // Pattern: A3 E4 A4 C5 | E4 A4 C5 E5 | repeat up/down
-      const leadPattern = [
-        220, 329.6, 440, 523.3,
-        329.6, 440, 523.3, 659.3,
-        523.3, 440, 329.6, 261.6,
-        329.6, 261.6, 220, 196,
-      ];
-      const STEP = BEAT / 2; // 16th notes at 120bpm
-      const LOOP = leadPattern.length * STEP;
-
-      function scheduleLeadLoop(t) {
-        leadPattern.forEach((freq, i) => {
-          const at = t + i * STEP;
-          const osc = ctx.createOscillator();
-          osc.type = 'square'; osc.frequency.value = freq;
-          const filt = ctx.createBiquadFilter();
-          filt.type = 'bandpass'; filt.frequency.value = freq * 2; filt.Q.value = 1.5;
-          const g = ctx.createGain();
-          g.gain.setValueAtTime(0, at);
-          g.gain.linearRampToValueAtTime(0.18, at + 0.015);
-          g.gain.exponentialRampToValueAtTime(0.001, at + STEP * 0.85);
-          osc.connect(filt); filt.connect(g); g.connect(comp);
-          osc.start(at); osc.stop(at + STEP);
-          osc.onended = () => { osc.disconnect(); filt.disconnect(); g.disconnect(); };
-        });
-        musicTimers.push(setTimeout(() => scheduleLeadLoop(ctx.currentTime), (LOOP - STEP) * 1000));
+    function playMusicTrack(key) {
+      if (!document.body.classList.contains('cool-mode')) return;
+      if (currentTrackKey === key && currentAudio && !currentAudio.paused) return;
+      if (currentAudio && !currentAudio.paused) {
+        const old = currentAudio;
+        currentTrackKey = key;
+        // Fade out old on its own interval, start new immediately at vol 0
+        const steps = Math.round(FADE_OUT * 25);
+        const delta = old.volume / steps;
+        let n = 0;
+        const id = setInterval(() => {
+          n++;
+          old.volume = Math.max(0, old.volume - delta);
+          if (n >= steps) { clearInterval(id); old.pause(); }
+        }, 40);
+        startTrack(key);
+      } else {
+        startTrack(key);
       }
-      scheduleLeadLoop(ctx.currentTime + 0.1);
+    }
 
-      // ── Hi-hat: noise bursts on every 8th note ──
-      function scheduleHat(t) {
-        const buf = ctx.createBuffer(1, ctx.sampleRate * 0.04, ctx.sampleRate);
-        const data = buf.getChannelData(0);
-        for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1);
-        const src = ctx.createBufferSource(); src.buffer = buf;
-        const filt = ctx.createBiquadFilter();
-        filt.type = 'highpass'; filt.frequency.value = 8000;
-        const g = ctx.createGain();
-        g.gain.setValueAtTime(0.12, t);
-        g.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
-        src.connect(filt); filt.connect(g); g.connect(comp);
-        src.start(t); src.stop(t + 0.05);
-        src.onended = () => { src.disconnect(); filt.disconnect(); g.disconnect(); };
-        musicTimers.push(setTimeout(() => scheduleHat(ctx.currentTime), BEAT * 500));
+    function stopMusicFade() {
+      if (currentAudio && !currentAudio.paused) {
+        const audio = currentAudio;
+        currentAudio    = null;
+        currentTrackKey = null;
+        fadeAudio(audio, 0, FADE_OUT, () => audio.pause());
       }
-      scheduleHat(ctx.currentTime + 0.1);
     }
 
     function toggleMute() {
       state.muted = !state.muted;
-      if (bgMusicNodes) bgMusicNodes.master.gain.value = state.muted ? 0 : 0.08;
+      if (currentAudio) {
+        fadeAudio(currentAudio, state.muted ? 0 : MUSIC_VOL, 0.3);
+      }
       const btn = document.getElementById('mute-btn');
       if (btn) btn.textContent = state.muted ? '\uD83D\uDD07' : '\uD83D\uDD0A';
     }
@@ -1897,7 +1887,6 @@ body::after {
       state.team2 = t2;
       resetGameState();
       state.phase = 'category-board';
-      initBgMusic();
       render();
     }
 
@@ -2019,6 +2008,7 @@ body::after {
     }
 
     function render() {
+      playMusicTrack(trackForPhase(state.phase));
       switch (state.phase) {
         case 'splash':          renderSplash();         break;
         case 'laser-reveal':    renderLaserMike();      break;
@@ -2076,7 +2066,6 @@ body::after {
         [523, 659, 784, 1047].forEach((f, i) => playTone(f, 0.12, 'square', 0.3, i * 0.07));
         setTimeout(() => playTone(1568, 0.3, 'sine', 0.35, 0), 300);
         try { sessionStorage.setItem('gameReady', '1'); } catch(e) {}
-        initBgMusic();
         state.phase = 'laser-reveal';
         render();
       });
@@ -2121,12 +2110,10 @@ body::after {
       document.getElementById('cool-mode-checkbox').addEventListener('change', function() {
         if (this.checked) {
           document.body.classList.add('cool-mode');
-          initBgMusic();
+          playMusicTrack(trackForPhase(state.phase));
         } else {
           document.body.classList.remove('cool-mode');
-          if (bgMusicNodes) {
-            bgMusicNodes.master.gain.value = 0;
-          }
+          stopMusicFade();
         }
       });
     })();

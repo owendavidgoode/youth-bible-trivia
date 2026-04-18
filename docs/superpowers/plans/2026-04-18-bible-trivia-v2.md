@@ -1,0 +1,1638 @@
+# Bible Trivia App v2 — Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Rebuild index.html as a visually impressive bible trivia game with categories, difficulty levels, first-to-10 scoring, second-chance mechanic, battlefield visualization, animations, sound, and Bridgepoint Bible Church branding.
+
+**Architecture:** Single `index.html` with inline CSS and vanilla JS. State machine with 6 phases. Question bank ~120 questions across 6 categories × 3 difficulties. Audio via Web Audio API + one background music element.
+
+**Tech Stack:** Vanilla HTML/CSS/JS, Web Audio API, Cloudflare Pages.
+
+---
+
+## Task 1: Question Bank
+
+Write the complete `QUESTION_BANK` object as a `<script>` block. All questions must be written out — no placeholders.
+
+```javascript
+const QUESTION_BANK = {
+  'old-testament': {
+    'hard': [
+      { q: "Which judge of Israel was left-handed and assassinated King Eglon of Moab?", options: ["Gideon", "Ehud", "Shamgar", "Othniel"], answer: "Ehud" },
+      { q: "What was the name of the city where Jonah was told to preach repentance?", options: ["Babylon", "Nineveh", "Tyre", "Sidon"], answer: "Nineveh" },
+      { q: "Who was the oldest person recorded in the Bible?", options: ["Noah", "Adam", "Jared", "Methuselah"], answer: "Methuselah" },
+      { q: "How many years did the Israelites wander in the wilderness?", options: ["20", "30", "40", "50"], answer: "40" },
+      { q: "Which prophet was taken to heaven in a whirlwind with a chariot of fire?", options: ["Elisha", "Elijah", "Isaiah", "Enoch"], answer: "Elijah" },
+      { q: "In what land did Job live?", options: ["Uz", "Ur", "Nod", "Goshen"], answer: "Uz" },
+      { q: "What sign did God give Noah as a covenant never to flood the earth again?", options: ["A pillar of cloud", "A rainbow", "A burning bush", "A star"], answer: "A rainbow" },
+    ],
+    'really-hard': [
+      { q: "Which son of Noah is listed as the ancestor of the Canaanite peoples?", options: ["Shem", "Ham", "Japheth", "Arpachshad"], answer: "Ham" },
+      { q: "What was the name of Abraham's first wife before he took Hagar?", options: ["Rebekah", "Leah", "Sarai", "Milcah"], answer: "Sarai" },
+      { q: "Which city did Moses strike with his staff to bring forth water, for which God barred him from entering Canaan?", options: ["Sinai", "Kadesh", "Meribah at Kadesh", "Horeb"], answer: "Meribah at Kadesh" },
+      { q: "Who was the father of Boaz, ancestor of King David?", options: ["Nahshon", "Salmon", "Ram", "Amminadab"], answer: "Salmon" },
+      { q: "How many chapters are in the book of Psalms?", options: ["100", "120", "150", "180"], answer: "150" },
+      { q: "Which tribe of Israel was assigned no territorial land inheritance because they served as priests?", options: ["Simeon", "Reuben", "Levi", "Benjamin"], answer: "Levi" },
+      { q: "What Hebrew phrase meaning 'I AM WHO I AM' did God reveal to Moses at the burning bush?", options: ["El Shaddai", "Adonai", "YHWH / Ehyeh-Asher-Ehyeh", "El Elyon"], answer: "YHWH / Ehyeh-Asher-Ehyeh" },
+    ],
+    'bob-stanberry': [
+      { q: "In Genesis 10's Table of Nations (the Toledoth of Noah), how many nations or peoples are listed in total?", options: ["60", "70", "77", "84"], answer: "70" },
+      { q: "Which of Jacob's sons is described in the blessing of Genesis 49 as 'a ravenous wolf, in the morning devouring the prey, and at evening dividing the spoil'?", options: ["Dan", "Gad", "Naphtali", "Benjamin"], answer: "Benjamin" },
+      { q: "In the Masoretic Text, what is the Hebrew name for the book Christians call Numbers?", options: ["Shemot", "Bamidbar", "Devarim", "Vayikra"], answer: "Bamidbar" },
+      { q: "According to Ezra 2, how many people returned from the Babylonian exile in Zerubbabel's first return?", options: ["28,456", "42,360", "51,210", "60,000"], answer: "42,360" },
+      { q: "The Elephantine Papyri, discovered in Egypt, contain correspondence from a Jewish military colony. In which century BCE did this colony exist?", options: ["8th century BCE", "7th century BCE", "5th century BCE", "3rd century BCE"], answer: "5th century BCE" },
+      { q: "Which minor prophet prophesied against Edom in a single-chapter book, and what is the Edomite ancestor's name in Hebrew?", options: ["Nahum, Esau", "Obadiah, Edom / Esav", "Malachi, Esau", "Amos, Edom"], answer: "Obadiah, Edom / Esav" },
+      { q: "The phrase 'Selah' appears in Psalms and once in Habakkuk. Scholars debate its meaning; which interpretation does the LXX (Septuagint) most closely support?", options: ["Pause for prayer", "A musical rest or interlude (diapsalma)", "Praise the Lord", "Forever"], answer: "A musical rest or interlude (diapsalma)" },
+    ],
+  },
+  'new-testament': {
+    'hard': [
+      { q: "Who wrote the book of Revelation?", options: ["Paul", "Peter", "John", "James"], answer: "John" },
+      { q: "On what island was Paul shipwrecked on his way to Rome?", options: ["Crete", "Cyprus", "Malta", "Patmos"], answer: "Malta" },
+      { q: "Which church in Revelation is described as 'lukewarm'?", options: ["Ephesus", "Sardis", "Pergamum", "Laodicea"], answer: "Laodicea" },
+      { q: "Who was the first Christian martyr stoned to death, as recorded in Acts?", options: ["James", "Philip", "Stephen", "Barnabas"], answer: "Stephen" },
+      { q: "What is the name of the sorcerer who tried to buy the Holy Spirit's power from Peter and John?", options: ["Bar-Jesus", "Elymas", "Simon Magus", "Sceva"], answer: "Simon Magus" },
+      { q: "In Paul's letter to the Galatians, how many of the 'fruit of the Spirit' does he list?", options: ["7", "8", "9", "12"], answer: "9" },
+      { q: "Which city hosted the first church council described in Acts 15?", options: ["Antioch", "Ephesus", "Rome", "Jerusalem"], answer: "Jerusalem" },
+    ],
+    'really-hard': [
+      { q: "In Romans 16, Paul commends a deaconess who carried his letter to the Romans. What is her name?", options: ["Priscilla", "Junia", "Phoebe", "Lydia"], answer: "Phoebe" },
+      { q: "The 'kenosis' passage in Philippians 2:7 says Christ 'emptied himself.' What Greek word is translated 'emptied'?", options: ["tapeinoo", "ekenosen", "humiliated", "doulos"], answer: "ekenosen" },
+      { q: "Which New Testament letter is written in the most polished, rhetorical Greek, leading many scholars to call it a 'word of exhortation'?", options: ["Romans", "Hebrews", "1 Peter", "James"], answer: "Hebrews" },
+      { q: "Paul's collection for the Jerusalem saints was coordinated across multiple churches. Which region does he praise in 2 Corinthians 8 for giving beyond their means?", options: ["Galatia", "Macedonia", "Asia", "Achaia"], answer: "Macedonia" },
+      { q: "The seven churches of Revelation are in Asia Minor (modern Turkey). Which of the seven is NOT mentioned in order when traveling the ancient Roman road circuit?", options: ["All are in correct Roman road order", "Laodicea comes before Philadelphia", "Thyatira comes after Pergamum", "Smyrna comes before Ephesus"], answer: "All are in correct Roman road order" },
+      { q: "According to Acts 20:9, a young man fell from a third-story window while Paul was preaching. What was his name?", options: ["Trophimus", "Eutychus", "Aristarchus", "Secundus"], answer: "Eutychus" },
+      { q: "What is the Greek word for 'assembly' or 'congregation' translated as 'church' throughout the New Testament?", options: ["synagoge", "ekklesia", "koinonia", "diakonia"], answer: "ekklesia" },
+    ],
+    'bob-stanberry': [
+      { q: "The Didache (Teaching of the Twelve Apostles) is an early church document. To what period does most scholarship date its final form?", options: ["50–70 CE", "70–120 CE", "150–200 CE", "250–300 CE"], answer: "70–120 CE" },
+      { q: "In Revelation 13, the number 666 is the 'number of the beast.' In Greek gematria, which Roman emperor does most early Christian scholarship associate this number with?", options: ["Caligula", "Claudius", "Domitian", "Nero"], answer: "Nero" },
+      { q: "Paul quotes Aratus's 'Phaenomena' ('For we are indeed his offspring') in his Athens speech in Acts 17. Which other Greek poet does he quote in the same verse according to the textual tradition?", options: ["Epimenides of Crete", "Pindar", "Hesiod", "Cleanthes"], answer: "Epimenides of Crete" },
+      { q: "The textus receptus underlying the KJV New Testament is primarily based on later Byzantine manuscripts. Which Renaissance scholar compiled the first published critical Greek New Testament in 1516?", options: ["John Calvin", "Desiderius Erasmus", "Martin Luther", "William Tyndale"], answer: "Desiderius Erasmus" },
+      { q: "In Galatians 3:16, Paul argues about Abraham's 'seed' being singular, not plural. What Greek word for 'seed' (also used in LXX of Genesis) does Paul exploit for this argument?", options: ["sperma", "huios", "genos", "tekna"], answer: "sperma" },
+      { q: "The ending of Mark's Gospel at 16:8 ('for they were afraid') is considered by most modern textual critics to be the original ending. What manuscript evidence supports that 16:9-20 is a later addition?", options: ["All manuscripts omit it", "Codex Sinaiticus and Codex Vaticanus both end at 16:8", "Only Latin manuscripts include it", "Only Syriac manuscripts omit it"], answer: "Codex Sinaiticus and Codex Vaticanus both end at 16:8" },
+      { q: "In the Pauline corpus, the term 'deutero-Pauline' refers to letters many scholars believe were written by later disciples using Paul's name. Which three are most commonly grouped as deutero-Pauline?", options: ["Galatians, Ephesians, Colossians", "Ephesians, Colossians, 2 Thessalonians", "1 Timothy, 2 Timothy, Titus (Pastorals)", "Ephesians, Colossians, Philemon"], answer: "1 Timothy, 2 Timothy, Titus (Pastorals)" },
+    ],
+  },
+  'kings-prophets': {
+    'hard': [
+      { q: "Who anointed Saul as the first king of Israel?", options: ["Eli", "Nathan", "Gad", "Samuel"], answer: "Samuel" },
+      { q: "Which prophet confronted David about his sin with Bathsheba using the parable of a stolen ewe lamb?", options: ["Gad", "Nathan", "Elijah", "Isaiah"], answer: "Nathan" },
+      { q: "Who killed Goliath?", options: ["Jonathan", "Saul", "David", "Solomon"], answer: "David" },
+      { q: "How many wives did Solomon have, according to 1 Kings 11?", options: ["300", "500", "700", "1000"], answer: "700" },
+      { q: "Which king of Israel built the altar to Baal in Samaria and married Jezebel?", options: ["Omri", "Ahab", "Jeroboam", "Jehu"], answer: "Ahab" },
+      { q: "Elijah challenged the prophets of Baal on which mountain?", options: ["Mount Sinai", "Mount Hermon", "Mount Carmel", "Mount Moriah"], answer: "Mount Carmel" },
+      { q: "Which prophet's vision included a valley of dry bones that came back to life?", options: ["Daniel", "Ezekiel", "Jeremiah", "Isaiah"], answer: "Ezekiel" },
+    ],
+    'really-hard': [
+      { q: "How many years did David reign over all Israel from Jerusalem, according to 2 Samuel 5?", options: ["7", "20", "33", "40"], answer: "33" },
+      { q: "Which king of Israel served for only 7 days before being killed by Omri?", options: ["Baasha", "Elah", "Zimri", "Tibni"], answer: "Zimri" },
+      { q: "Isaiah's famous suffering servant passage begins in which chapter?", options: ["Isaiah 40", "Isaiah 50", "Isaiah 52", "Isaiah 61"], answer: "Isaiah 52" },
+      { q: "Jeremiah is described as 'the weeping prophet.' In what year (approx.) did the Babylonians destroy Jerusalem and the Temple?", options: ["722 BCE", "605 BCE", "586 BCE", "539 BCE"], answer: "586 BCE" },
+      { q: "Which prophet married a prostitute named Gomer as an object lesson of God's love for unfaithful Israel?", options: ["Amos", "Micah", "Hosea", "Joel"], answer: "Hosea" },
+      { q: "According to 1 Kings 4:32, how many proverbs did Solomon speak?", options: ["1,000", "2,000", "3,000", "5,000"], answer: "3,000" },
+      { q: "Which king had the longest reign in Judah, reigning for 55 years?", options: ["Asa", "Jehoshaphat", "Hezekiah", "Manasseh"], answer: "Manasseh" },
+    ],
+    'bob-stanberry': [
+      { q: "The Mesha Stele (Moabite Stone) discovered in 1868 mentions which Israelite king by name as the king whose son oppressed Moab?", options: ["Ahab", "Omri", "Jehu", "Jeroboam"], answer: "Omri" },
+      { q: "In Hebrew, the divine name given to the messianic child in Isaiah 9:6 is a series of four compound titles. Which of these titles is NOT among them?", options: ["Wonderful Counselor", "Mighty God", "Prince of Peace", "Holy One of Israel"], answer: "Holy One of Israel" },
+      { q: "The book of Amos contains a rare oracle against a Gentile nation for 'ripping open pregnant women in Gilead.' Which nation is condemned for this?", options: ["Moab", "Edom", "Ammon", "Aram"], answer: "Ammon" },
+      { q: "Isaiah 7:14 uses the Hebrew word 'almah' (translated 'virgin' or 'young woman'). What is the corresponding LXX Greek word Matthew 1:23 uses?", options: ["neanis", "parthenos", "gunē", "korē"], answer: "parthenos" },
+      { q: "The Lachish Letters are 21 ostraca (pottery shards with writing) from around 588 BCE. They describe military communications during whose Babylonian invasion?", options: ["Tiglath-Pileser III", "Sennacherib", "Nebuchadnezzar II", "Cyrus the Great"], answer: "Nebuchadnezzar II" },
+      { q: "Elijah's still small voice (1 Kings 19:12) is rendered in Hebrew as 'qol demamah daqah.' What does 'demamah' most precisely mean?", options: ["Soft", "Quiet silence / whisper", "Holy", "Divine"], answer: "Quiet silence / whisper" },
+      { q: "The Deuteronomistic History is a scholarly term for which books of the Old Testament considered a unified theological history?", options: ["Genesis through Deuteronomy", "Joshua, Judges, Samuel, Kings", "Chronicles, Ezra, Nehemiah", "Isaiah through Malachi"], answer: "Joshua, Judges, Samuel, Kings" },
+    ],
+  },
+  'jesus-gospels': {
+    'hard': [
+      { q: "Which Gospel begins with 'In the beginning was the Word'?", options: ["Matthew", "Mark", "Luke", "John"], answer: "John" },
+      { q: "In which town was Jesus born?", options: ["Nazareth", "Jerusalem", "Bethlehem", "Capernaum"], answer: "Bethlehem" },
+      { q: "Who baptized Jesus in the Jordan River?", options: ["Peter", "Elijah", "John the Baptist", "Andrew"], answer: "John the Baptist" },
+      { q: "How many days did Jesus fast in the wilderness before being tempted?", options: ["3", "10", "40", "120"], answer: "40" },
+      { q: "What was the name of the garden where Jesus was arrested?", options: ["Garden of Eden", "Garden of Gethsemane", "Garden Tomb", "Garden of Olives"], answer: "Garden of Gethsemane" },
+      { q: "Who was the Roman governor who sentenced Jesus to death?", options: ["Herod Antipas", "Caiaphas", "Pontius Pilate", "Agrippa"], answer: "Pontius Pilate" },
+      { q: "On what day did Jesus rise from the dead, according to the Gospels?", options: ["Friday", "Saturday", "Sunday", "Monday"], answer: "Sunday" },
+    ],
+    'really-hard': [
+      { q: "In the Sermon on the Mount, Jesus says 'Blessed are the ______, for they shall inherit the earth.'", options: ["pure in heart", "meek", "poor in spirit", "merciful"], answer: "meek" },
+      { q: "Jesus's triumphal entry into Jerusalem fulfilled a prophecy from which Old Testament book?", options: ["Isaiah", "Micah", "Zechariah", "Malachi"], answer: "Zechariah" },
+      { q: "What were the names of the two criminals crucified alongside Jesus, as given in tradition (NOT in the canonical Gospels by name)?", options: ["Barabbas and Dismas", "Gestas and Dismas", "Simon and Gestas", "Titus and Dumachus"], answer: "Gestas and Dismas" },
+      { q: "John 11:35 ('Jesus wept') is the shortest verse in many English Bibles, but what is the shortest verse in the Greek New Testament by word count?", options: ["John 11:35", "Luke 20:30", "1 Thessalonians 5:16", "John 11:35 is also shortest in Greek"], answer: "1 Thessalonians 5:16" },
+      { q: "Luke 1's 'Magnificat' is Mary's hymn of praise. Which Old Testament song does it most closely mirror in structure and theme?", options: ["The Song of Miriam (Exodus 15)", "Hannah's Prayer (1 Samuel 2)", "Deborah's Song (Judges 5)", "The Song of Songs"], answer: "Hannah's Prayer (1 Samuel 2)" },
+      { q: "Jesus used the term 'Son of Man' most frequently in the Gospels to refer to himself. From which Old Testament book does this title primarily derive its apocalyptic meaning?", options: ["Isaiah 53", "Ezekiel 2", "Daniel 7", "Zechariah 9"], answer: "Daniel 7" },
+      { q: "In John 4, Jesus's conversation with the Samaritan woman takes place at 'Jacob's Well' near which city?", options: ["Samaria", "Sychar", "Shechem", "Dothan"], answer: "Sychar" },
+    ],
+    'bob-stanberry': [
+      { q: "The 'Two-Source Hypothesis' of Gospel origins holds that Matthew and Luke both independently used Mark and another source. What is the scholarly abbreviation for that second source?", options: ["M", "L", "Q (from German Quelle)", "Proto-Luke"], answer: "Q (from German Quelle)" },
+      { q: "In John 19:20, the inscription on the cross was written in three languages. Which three?", options: ["Hebrew, Greek, Latin", "Aramaic, Greek, Latin", "Hebrew, Aramaic, Latin", "Hebrew, Aramaic, Greek, Latin"], answer: "Hebrew, Aramaic, Latin" },
+      { q: "The Greek term 'parousia' is used in eschatological passages about Jesus's return. What does this word literally mean in Greek?", options: ["Second coming", "Presence / arrival", "Glory", "Judgment"], answer: "Presence / arrival" },
+      { q: "Matthew's genealogy of Jesus in chapter 1 is structured in three groups of 14 generations. In Jewish gematria, 14 is the numerical value of which Hebrew name?", options: ["Yeshua", "David (דוד)", "Abraham", "Israel"], answer: "David (דוד)" },
+      { q: "The Pericope Adulterae (the story of the woman caught in adultery) in John 7:53-8:11 is absent from the earliest manuscripts. In which Gospel does it appear in some manuscript traditions as an alternate location?", options: ["Matthew after 21:17", "Mark after 12:17", "Luke after 21:38", "It only ever appears in John"], answer: "Luke after 21:38" },
+      { q: "Papias of Hierapolis (c. 130 CE) is the earliest source to attribute the Gospel of Matthew to the apostle Matthew. In what language did Papias claim Matthew originally composed his Gospel?", options: ["Greek", "Hebrew/Aramaic (logia)", "Latin", "Coptic"], answer: "Hebrew/Aramaic (logia)" },
+      { q: "Jesus quotes from the Psalms on the cross: 'Eli, Eli, lema sabachthani?' (Matthew 27:46). This is the opening line of which Psalm?", options: ["Psalm 22", "Psalm 31", "Psalm 69", "Psalm 88"], answer: "Psalm 22" },
+    ],
+  },
+  'books-bible': {
+    'hard': [
+      { q: "How many books are in the Protestant Old Testament?", options: ["33", "36", "39", "46"], answer: "39" },
+      { q: "Which book of the Bible contains the Ten Commandments in its earliest canonical account?", options: ["Genesis", "Leviticus", "Exodus", "Deuteronomy"], answer: "Exodus" },
+      { q: "Who is traditionally credited with writing the book of Proverbs?", options: ["David", "Moses", "Solomon", "Asaph"], answer: "Solomon" },
+      { q: "What is the last book of the Old Testament in the Protestant canon?", options: ["Zechariah", "Ezra", "Malachi", "Nehemiah"], answer: "Malachi" },
+      { q: "Which book immediately follows Acts in the New Testament?", options: ["Galatians", "Romans", "1 Corinthians", "Hebrews"], answer: "Romans" },
+      { q: "The book of Lamentations mourns the fall of which city?", options: ["Babylon", "Nineveh", "Jerusalem", "Samaria"], answer: "Jerusalem" },
+      { q: "Who wrote the majority of the New Testament letters?", options: ["John", "Peter", "James", "Paul"], answer: "Paul" },
+    ],
+    'really-hard': [
+      { q: "The book of Job is believed by many scholars to be one of the oldest books in the Bible. Which genre best describes it?", options: ["Apocalyptic", "Historical narrative", "Wisdom literature / theodicy", "Prophetic oracle"], answer: "Wisdom literature / theodicy" },
+      { q: "Philemon is the shortest letter in the Pauline corpus. How many chapters does it have?", options: ["1", "2", "3", "4"], answer: "1" },
+      { q: "Which book of the Bible records the giving of the Law at Sinai and the construction of the Tabernacle?", options: ["Leviticus", "Numbers", "Exodus", "Deuteronomy"], answer: "Exodus" },
+      { q: "The Septuagint (LXX) is the Greek translation of the Hebrew scriptures. Tradition credits how many Jewish scholars with producing it, giving the translation its name?", options: ["7", "12", "70 (or 72)", "100"], answer: "70 (or 72)" },
+      { q: "Which New Testament book contains the 'Hall of Faith' in chapter 11, listing heroes of the Old Testament?", options: ["Romans", "James", "Hebrews", "1 Peter"], answer: "Hebrews" },
+      { q: "The book of Numbers gets its English name from two censuses of the Israelites. How many males 20 years and older were counted in the first census?", options: ["403,550", "601,730", "603,550", "650,000"], answer: "603,550" },
+      { q: "Which Old Testament book is structured as an acrostic poem, with each chapter (or section) beginning with successive letters of the Hebrew alphabet?", options: ["Psalms", "Proverbs", "Lamentations", "Ecclesiastes"], answer: "Lamentations" },
+    ],
+    'bob-stanberry': [
+      { q: "The Muratorian Fragment is the earliest known canonical list of New Testament books. Approximately when was it written, and which books does it notably exclude?", options: ["c. 170 CE, excludes Hebrews and Revelation", "c. 170 CE, excludes James and both letters of Peter", "c. 200 CE, excludes the Pastorals", "c. 250 CE, excludes John's Gospel"], answer: "c. 170 CE, excludes James and both letters of Peter" },
+      { q: "The Hebrew Bible is organized into three sections: Torah, Nevi'im, and Ketuvim. What is the acronym formed from these three Hebrew words?", options: ["TaNaKh", "Torah", "JEDP", "Talmud"], answer: "TaNaKh" },
+      { q: "Which Old Testament book contains the phrase 'There is nothing new under the sun' and was likely composed in the Persian or early Hellenistic period based on its linguistic features?", options: ["Proverbs", "Job", "Ecclesiastes (Qohelet)", "Song of Songs"], answer: "Ecclesiastes (Qohelet)" },
+      { q: "The Documentary Hypothesis proposes four source documents underlying the Pentateuch. What do the letters J, E, D, and P stand for?", options: ["Judaic, Ephraimite, Deuteronomist, Priestly", "Jerusalem, Elohim, Davidic, Proto", "Jahwist, Elohist, Deuteronomist, Priestly", "Judean, Ephesian, Deuteronomic, Palestinian"], answer: "Jahwist, Elohist, Deuteronomist, Priestly" },
+      { q: "The Catholic and Orthodox canons include books not in the Protestant OT, collectively called the Apocrypha by Protestants. Which of these is NOT considered deuterocanonical by the Catholic Church?", options: ["Tobit", "1 Maccabees", "1 Enoch", "Judith"], answer: "1 Enoch" },
+      { q: "Which book of the New Testament quotes directly from 1 Enoch (a non-canonical Jewish apocalyptic text)?", options: ["Revelation", "2 Peter", "Jude", "Hebrews"], answer: "Jude" },
+      { q: "The Codex Sinaiticus, one of the oldest complete manuscripts of the New Testament, dates to approximately when?", options: ["100–150 CE", "200–250 CE", "330–360 CE", "400–450 CE"], answer: "330–360 CE" },
+    ],
+  },
+  'numbers-facts': {
+    'hard': [
+      { q: "How many disciples did Jesus choose as his twelve apostles?", options: ["10", "11", "12", "13"], answer: "12" },
+      { q: "How many days was Jonah inside the great fish?", options: ["1", "2", "3", "7"], answer: "3" },
+      { q: "How many plagues did God send upon Egypt?", options: ["7", "8", "10", "12"], answer: "10" },
+      { q: "How many pieces of silver did Judas receive for betraying Jesus?", options: ["10", "20", "30", "50"], answer: "30" },
+      { q: "How many years did it take Solomon to build the Temple?", options: ["3", "5", "7", "12"], answer: "7" },
+      { q: "How many fish did the disciples catch in the miraculous catch in John 21?", options: ["72", "120", "153", "276"], answer: "153" },
+      { q: "How many days and nights did it rain during Noah's flood?", options: ["7", "20", "40", "150"], answer: "40" },
+    ],
+    'really-hard': [
+      { q: "According to Acts 1:15, approximately how many believers were gathered in Jerusalem after Jesus's ascension?", options: ["70", "120", "500", "3,000"], answer: "120" },
+      { q: "How many years did the Israelites live in Egypt before the Exodus, according to Exodus 12:40?", options: ["200", "300", "400", "430"], answer: "430" },
+      { q: "How many books of the Bible bear women's names?", options: ["1", "2", "3", "4"], answer: "2" },
+      { q: "According to 1 Kings 10:14, how many talents of gold came to Solomon in one year?", options: ["333", "666", "999", "1,200"], answer: "666" },
+      { q: "How many times does the number 7 appear in the book of Revelation (approximately)?", options: ["7", "27", "54", "Over 50 times"], answer: "Over 50 times" },
+      { q: "In the feeding of the 5,000, how many loaves and fish did Jesus start with?", options: ["2 loaves, 2 fish", "5 loaves, 2 fish", "7 loaves, 2 fish", "5 loaves, 5 fish"], answer: "5 loaves, 2 fish" },
+      { q: "According to Numbers 1, the total number of Israelite males counted in the wilderness census (aged 20+) was approximately how many?", options: ["300,000", "503,000", "603,550", "700,000"], answer: "603,550" },
+    ],
+    'bob-stanberry': [
+      { q: "In Revelation 7, the number 144,000 sealed from the tribes of Israel is given. Which tribe is omitted from the list, replaced by Manasseh?", options: ["Reuben", "Dan", "Ephraim", "Asher"], answer: "Dan" },
+      { q: "Methuselah lived 969 years. According to the Masoretic genealogy of Genesis 5, in what year before the flood did he die (relative to creation)?", options: ["The year of the flood itself (year 1656)", "20 years before the flood", "100 years before the flood", "300 years after Noah's birth"], answer: "The year of the flood itself (year 1656)" },
+      { q: "The Jubilee year in Leviticus 25 occurs every how many years, and is preceded by how many Sabbatical years?", options: ["40 years, 4 Sabbaticals", "49 years, 7 Sabbaticals", "50 years, 7 Sabbaticals", "70 years, 10 Sabbaticals"], answer: "50 years, 7 Sabbaticals" },
+      { q: "According to Ezekiel's vision of the restored Temple (Ezekiel 40–48), the outer court's east gate had how many steps leading up to it?", options: ["3", "7", "8", "10"], answer: "7" },
+      { q: "1 Kings 6:1 states Solomon began building the Temple 480 years after the Exodus. If Solomon began his reign c. 970 BCE and started building in his 4th year, what approximate date does this give for the Exodus?", options: ["1446 BCE", "1290 BCE", "1250 BCE", "1150 BCE"], answer: "1446 BCE" },
+      { q: "The gematria value of 'Nero Caesar' written in Hebrew letters (נרון קסר, Neron Qesar) equals which number associated with the Beast in Revelation?", options: ["616", "660", "666", "999"], answer: "666" },
+      { q: "According to Genesis 5's Masoretic chronology, how many years was Adam alive when his son Seth was born?", options: ["100", "105", "130", "150"], answer: "130" },
+    ],
+  },
+};
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+```
+
+---
+
+## Task 2: State + Constants
+
+Add these constants and the state object to the `<script>` block, after the question bank:
+
+```javascript
+const WIN_SCORE = 10;
+const CATEGORIES = [
+  { id: 'old-testament',  label: 'Old Testament',     emoji: '📜' },
+  { id: 'new-testament',  label: 'New Testament',      emoji: '✉️' },
+  { id: 'kings-prophets', label: 'Kings & Prophets',   emoji: '👑' },
+  { id: 'jesus-gospels',  label: 'Jesus & Gospels',    emoji: '✝️' },
+  { id: 'books-bible',    label: 'Books of the Bible', emoji: '📖' },
+  { id: 'numbers-facts',  label: 'Numbers & Facts',    emoji: '🔢' },
+];
+const DIFFICULTIES = [
+  { id: 'hard',          label: 'Hard',         tooltip: 'For serious Bible students' },
+  { id: 'really-hard',   label: 'Really Hard',  tooltip: 'Seminary-level trivia' },
+  { id: 'bob-stanberry', label: 'Bob Stanberry', tooltip: 'Only for those who read the Septuagint for fun. Bob would finish this before you finish reading the question.' },
+];
+const WRONG_FLAVORS = [
+  "Michael would have known that one.",
+  "Ooh, tough one. Michael definitely got this in practice.",
+  "Not your best moment. Michael is watching.",
+  "The Septuagint crowd is wincing right now.",
+  "Bob Stanberry just shook his head.",
+];
+
+const state = {
+  phase: 'setup',           // 'setup' | 'category-board' | 'buzz' | 'reveal' | 'second-chance' | 'win'
+  difficulty: null,
+  team1: '',
+  team2: '',
+  scores: [0, 0],
+  pickingTeam: 0,
+  currentQuestion: null,    // { q, options, answer, shuffledOptions }
+  currentCategory: null,
+  buzzedTeam: null,
+  usedQuestions: {},        // { [categoryId]: Set of used indices }
+  wrongFlavorIndex: 0,
+  muted: false,
+};
+```
+
+---
+
+## Task 3: Audio System
+
+Add the audio module to the `<script>` block, after the state:
+
+```javascript
+let audioCtx = null;
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playTone(freq, duration, type = 'sine', volume = 0.3, startDelay = 0) {
+  if (state.muted) return;
+  const ctx = getAudioCtx();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, ctx.currentTime + startDelay);
+  gain.gain.setValueAtTime(volume, ctx.currentTime + startDelay);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startDelay + duration);
+  osc.start(ctx.currentTime + startDelay);
+  osc.stop(ctx.currentTime + startDelay + duration + 0.05);
+}
+
+function sfxBuzz()    { playTone(440, 0.2, 'square', 0.4); }
+function sfxCorrect() { playTone(523, 0.15, 'sine', 0.4); setTimeout(() => playTone(659, 0.2, 'sine', 0.4), 150); }
+function sfxWrong()   { playTone(200, 0.15, 'square', 0.3); setTimeout(() => playTone(150, 0.2, 'square', 0.3), 150); }
+function sfxPoint() {
+  [523, 659, 784, 1047].forEach((f, i) => playTone(f, 0.1, 'sine', 0.35, i * 0.08));
+}
+function sfxWin() {
+  [262, 330, 392, 523, 659, 784, 1047].forEach((f, i) => playTone(f, 0.15, 'sine', 0.4, i * 0.1));
+}
+
+let bgMusic = null;
+function initBgMusic() {
+  if (bgMusic) return;
+  bgMusic = document.getElementById('bg-music');
+  if (bgMusic) {
+    bgMusic.volume = 0.25;
+    bgMusic.play().catch(() => {});
+  }
+}
+function toggleMute() {
+  state.muted = !state.muted;
+  if (audioCtx) {
+    state.muted ? audioCtx.suspend() : audioCtx.resume();
+  }
+  if (bgMusic) bgMusic.muted = state.muted;
+  const btn = document.getElementById('mute-btn');
+  if (btn) btn.textContent = state.muted ? '🔇' : '🔊';
+}
+```
+
+Also add the `<audio>` element in `<body>` before `<div id="app">`:
+
+```html
+<audio id="bg-music" loop src="https://assets.mixkit.co/music/preview/mixkit-games-worldbeat-466.mp3"></audio>
+```
+
+---
+
+## Task 4: CSS — Full Dark Animated Theme
+
+Replace the entire `<style>` block with this complete CSS. Write every rule — no placeholders:
+
+```css
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg-from: #0a0a1a;
+  --bg-to: #1a0a2e;
+  --surface: rgba(255,255,255,0.05);
+  --surface-border: rgba(255,255,255,0.1);
+  --team1: #3b82f6;
+  --team2: #ef4444;
+  --correct: #22c55e;
+  --wrong: #ef4444;
+  --gold: #f59e0b;
+  --text: #f0f0f0;
+  --muted: #8888aa;
+}
+
+@keyframes bgPulse {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  15%       { transform: translateX(-8px); }
+  30%       { transform: translateX(8px); }
+  45%       { transform: translateX(-6px); }
+  60%       { transform: translateX(6px); }
+  75%       { transform: translateX(-3px); }
+  90%       { transform: translateX(3px); }
+}
+
+@keyframes scorePop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.45); filter: brightness(1.6); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
+@keyframes correctPulse {
+  0%, 100% { box-shadow: 0 0 12px rgba(34,197,94,0.5); }
+  50%       { box-shadow: 0 0 28px rgba(34,197,94,1), 0 0 50px rgba(34,197,94,0.4); }
+}
+
+@keyframes buzzFlash {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(0.93); }
+  60%  { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+@keyframes confettiFall {
+  0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+
+@keyframes winGlow {
+  0%, 100% { text-shadow: 0 0 20px currentColor, 0 0 40px currentColor; }
+  50%       { text-shadow: 0 0 40px currentColor, 0 0 80px currentColor, 0 0 120px currentColor; }
+}
+
+@keyframes playAgainPulse {
+  0%, 100% { box-shadow: 0 0 16px var(--gold), 0 0 32px rgba(245,158,11,0.4); }
+  50%       { box-shadow: 0 0 32px var(--gold), 0 0 64px rgba(245,158,11,0.6); }
+}
+
+body {
+  background: linear-gradient(135deg, var(--bg-from) 0%, #160f2a 40%, var(--bg-to) 100%);
+  background-size: 400% 400%;
+  animation: bgPulse 12s ease infinite;
+  color: var(--text);
+  font-family: 'Georgia', serif;
+  font-size: 1.125rem;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+#app {
+  width: 100vw;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  animation: fadeIn 0.4s ease both;
+}
+
+/* ─── Mute Button ─────────────────────────────── */
+#mute-btn {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  color: var(--text);
+  font-size: 1.4rem;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, box-shadow 0.2s;
+  backdrop-filter: blur(8px);
+}
+#mute-btn:hover {
+  background: rgba(255,255,255,0.12);
+  box-shadow: 0 0 12px rgba(255,255,255,0.2);
+}
+
+/* ─── Bridgepoint Logo ────────────────────────── */
+.bp-logo {
+  height: 40px;
+  object-fit: contain;
+  filter: brightness(1.1);
+}
+.bp-logo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.bp-logo-fallback {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* ─── Setup Screen ────────────────────────────── */
+.setup-screen {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  padding: 3rem 2rem;
+  flex: 1;
+  animation: fadeIn 0.5s ease both;
+}
+
+.setup-logo-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.setup-screen h1 {
+  font-size: 3.5rem;
+  letter-spacing: 0.04em;
+  text-shadow: 0 0 24px rgba(59,130,246,0.5), 0 2px 8px rgba(0,0,0,0.8);
+  text-align: center;
+  cursor: default;
+}
+.setup-screen h1:hover::after {
+  content: attr(data-tooltip);
+  display: block;
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-weight: normal;
+  letter-spacing: 0;
+  margin-top: 0.25rem;
+}
+
+.setup-tagline {
+  color: var(--gold);
+  font-style: italic;
+  font-size: 1.1rem;
+  text-align: center;
+  margin-top: -1rem;
+  opacity: 0.85;
+}
+
+.difficulty-row {
+  display: flex;
+  gap: 1.2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.diff-card {
+  background: var(--surface);
+  border: 2px solid var(--surface-border);
+  border-radius: 1rem;
+  padding: 1.2rem 1.6rem;
+  cursor: pointer;
+  text-align: center;
+  min-width: 150px;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+  position: relative;
+  backdrop-filter: blur(6px);
+}
+.diff-card:hover {
+  border-color: rgba(255,255,255,0.3);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+}
+.diff-card.selected {
+  border-color: var(--gold);
+  box-shadow: 0 0 16px rgba(245,158,11,0.6), 0 0 32px rgba(245,158,11,0.2);
+}
+.diff-card-label {
+  font-size: 1.15rem;
+  font-weight: bold;
+  color: var(--text);
+}
+.diff-card-sub {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-top: 0.3rem;
+}
+.diff-card[data-id="bob-stanberry"] .diff-card-label {
+  color: var(--gold);
+}
+
+.team-inputs {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.form-group label {
+  font-size: 0.9rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.form-group input {
+  width: 220px;
+  padding: 0.75rem 1rem;
+  font-size: 1.1rem;
+  background: var(--surface);
+  color: var(--text);
+  border: 2px solid var(--surface-border);
+  border-radius: 0.6rem;
+  font-family: 'Georgia', serif;
+  transition: border-color 0.2s;
+  backdrop-filter: blur(4px);
+}
+.form-group input:focus {
+  outline: none;
+  border-color: rgba(255,255,255,0.35);
+}
+.form-group input::placeholder {
+  color: var(--muted);
+}
+
+.start-btn {
+  padding: 1rem 2.5rem;
+  font-size: 1.3rem;
+  font-weight: bold;
+  font-family: 'Georgia', serif;
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  color: white;
+  border: none;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+  box-shadow: 0 0 20px rgba(59,130,246,0.4);
+}
+.start-btn:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-2px);
+  box-shadow: 0 0 30px rgba(59,130,246,0.6);
+}
+.start-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ─── Scoreboard ──────────────────────────────── */
+.scoreboard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem 0.5rem;
+  background: rgba(0,0,0,0.3);
+  border-bottom: 1px solid var(--surface-border);
+  backdrop-filter: blur(8px);
+  gap: 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.score-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  min-width: 120px;
+}
+.score-block.team1 { color: var(--team1); }
+.score-block.team2 { color: var(--team2); }
+
+.score-name {
+  font-size: 0.85rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.8;
+}
+.score-value {
+  font-size: 3.5rem;
+  font-weight: bold;
+  line-height: 1;
+  filter: drop-shadow(0 0 8px currentColor);
+}
+.score-value.popping {
+  animation: scorePop 0.5s ease both;
+}
+
+.scoreboard-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+.scoreboard-center .bp-logo-wrap {
+  margin-bottom: 0.2rem;
+}
+.picking-label {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.picking-team {
+  font-size: 1rem;
+  font-weight: bold;
+  color: var(--gold);
+}
+
+/* ─── Battlefield Bar ─────────────────────────── */
+.battlefield-wrap {
+  position: relative;
+  width: 100%;
+  height: 12px;
+  background: var(--surface);
+  overflow: hidden;
+}
+.battlefield-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: linear-gradient(90deg, var(--team1), #1d4ed8);
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 2px 0 12px rgba(59,130,246,0.7);
+}
+.battlefield-right {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  background: linear-gradient(270deg, var(--team2), #b91c1c);
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: -2px 0 12px rgba(239,68,68,0.7);
+}
+.battlefield-shimmer {
+  animation: battlefieldShimmer 0.6s ease both;
+}
+@keyframes battlefieldShimmer {
+  0%   { filter: brightness(1); }
+  40%  { filter: brightness(2.5); }
+  100% { filter: brightness(1); }
+}
+
+/* ─── Category Board ──────────────────────────── */
+.category-board {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+  flex: 1;
+  gap: 2rem;
+  animation: fadeIn 0.4s ease both;
+}
+
+.category-board-title {
+  font-size: 1.3rem;
+  color: var(--muted);
+  text-align: center;
+}
+.category-board-title strong {
+  font-size: 1.5rem;
+  color: var(--gold);
+}
+
+.category-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 1.25rem;
+  width: 100%;
+  max-width: 800px;
+  flex: 1;
+}
+
+.category-card {
+  background: var(--surface);
+  border: 2px solid var(--surface-border);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.2s, box-shadow 0.2s;
+  text-align: center;
+  backdrop-filter: blur(6px);
+  animation: fadeIn 0.4s ease both;
+  position: relative;
+  overflow: hidden;
+}
+.category-card:hover:not(.exhausted) {
+  transform: translateY(-4px);
+  border-color: rgba(255,255,255,0.35);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.6), 0 0 16px rgba(255,255,255,0.1);
+}
+.category-card.exhausted {
+  opacity: 0.38;
+  cursor: not-allowed;
+  filter: grayscale(0.7);
+}
+.category-card-emoji {
+  font-size: 2.2rem;
+  line-height: 1;
+}
+.category-card-label {
+  font-size: 1rem;
+  font-weight: bold;
+  letter-spacing: 0.03em;
+}
+.category-card-count {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.exhausted-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  color: var(--muted);
+  border-radius: 1rem;
+}
+
+/* ─── Question Screen ─────────────────────────── */
+.question-screen {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 1.5rem 2rem;
+  gap: 1.5rem;
+  animation: fadeIn 0.35s ease both;
+}
+
+.question-category-badge {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.question-card {
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  border-radius: 1rem;
+  padding: 2rem;
+  text-align: center;
+  font-size: 1.6rem;
+  line-height: 1.5;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.options-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.option-card {
+  background: var(--surface);
+  border: 2px solid var(--surface-border);
+  border-radius: 0.75rem;
+  padding: 1rem 1.25rem;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  backdrop-filter: blur(4px);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  cursor: default;
+}
+.option-card.correct {
+  border-color: var(--correct);
+  background: rgba(34,197,94,0.12);
+  color: var(--correct);
+  animation: correctPulse 1.2s ease infinite;
+}
+.option-label {
+  font-weight: bold;
+  font-size: 0.9rem;
+  min-width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ─── Buzz Buttons ────────────────────────────── */
+.buzz-area {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: auto;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+
+.buzz-btn {
+  flex: 1;
+  min-height: 120px;
+  font-size: 1.4rem;
+  font-weight: bold;
+  font-family: 'Georgia', serif;
+  border: none;
+  border-radius: 1rem;
+  cursor: pointer;
+  color: white;
+  letter-spacing: 0.03em;
+  transition: opacity 0.15s, transform 0.15s, box-shadow 0.2s;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+}
+.buzz-btn[data-team="0"] {
+  background: linear-gradient(135deg, #1d4ed8, #3b82f6, #60a5fa);
+  box-shadow: 0 0 20px rgba(59,130,246,0.5);
+}
+.buzz-btn[data-team="1"] {
+  background: linear-gradient(135deg, #b91c1c, #ef4444, #f87171);
+  box-shadow: 0 0 20px rgba(239,68,68,0.5);
+}
+.buzz-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
+}
+.buzz-btn[data-team="0"]:hover:not(:disabled) {
+  box-shadow: 0 0 36px rgba(59,130,246,0.8);
+}
+.buzz-btn[data-team="1"]:hover:not(:disabled) {
+  box-shadow: 0 0 36px rgba(239,68,68,0.8);
+}
+.buzz-btn:active:not(:disabled) {
+  animation: buzzFlash 0.25s ease both;
+}
+.buzz-btn:disabled {
+  opacity: 0.28;
+  cursor: not-allowed;
+  filter: grayscale(0.5);
+}
+
+/* ─── Reveal Area ─────────────────────────────── */
+.reveal-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-top: auto;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+
+.buzzed-team-display {
+  font-size: 1.4rem;
+  font-weight: bold;
+  text-align: center;
+}
+.buzzed-team-display.team1 { color: var(--team1); }
+.buzzed-team-display.team2 { color: var(--team2); }
+
+.flavor-text {
+  font-size: 0.9rem;
+  color: var(--muted);
+  font-style: italic;
+  text-align: center;
+  min-height: 1.4em;
+}
+
+.verdict-buttons {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+}
+.verdict-buttons button {
+  flex: 1;
+  padding: 1rem;
+  font-size: 1.2rem;
+  font-weight: bold;
+  font-family: 'Georgia', serif;
+  border: none;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  color: white;
+  transition: opacity 0.2s, transform 0.15s;
+}
+.verdict-buttons button:hover {
+  opacity: 0.85;
+  transform: translateY(-1px);
+}
+#correct-btn {
+  background: linear-gradient(135deg, #15803d, #22c55e);
+  box-shadow: 0 0 16px rgba(34,197,94,0.4);
+}
+#wrong-btn {
+  background: linear-gradient(135deg, #b91c1c, #ef4444);
+  box-shadow: 0 0 16px rgba(239,68,68,0.4);
+}
+
+/* ─── Second Chance Banner ────────────────────── */
+.second-chance-banner {
+  background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(245,158,11,0.05));
+  border: 1px solid rgba(245,158,11,0.4);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: var(--gold);
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+  animation: fadeIn 0.3s ease both;
+}
+
+/* ─── Win Screen ──────────────────────────────── */
+.win-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5,5,20,0.96);
+  z-index: 200;
+  gap: 1.5rem;
+  padding: 2rem;
+  text-align: center;
+  animation: fadeIn 0.5s ease both;
+  overflow: hidden;
+}
+
+.win-title {
+  font-size: 1.2rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+.win-winner-name {
+  font-size: 4rem;
+  font-weight: bold;
+  line-height: 1.1;
+  animation: winGlow 2s ease infinite;
+}
+.win-winner-name.team1 { color: var(--team1); }
+.win-winner-name.team2 { color: var(--team2); }
+
+.win-tagline {
+  color: var(--gold);
+  font-style: italic;
+  font-size: 1.1rem;
+  opacity: 0.9;
+}
+
+.win-scores {
+  display: flex;
+  gap: 3rem;
+  font-size: 1.5rem;
+}
+.win-score-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+.win-score-block.team1 { color: var(--team1); }
+.win-score-block.team2 { color: var(--team2); }
+.win-score-val {
+  font-size: 3rem;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.play-again-btn {
+  padding: 1rem 2.5rem;
+  font-size: 1.3rem;
+  font-weight: bold;
+  font-family: 'Georgia', serif;
+  background: linear-gradient(135deg, #d97706, #f59e0b);
+  color: #1a1000;
+  border: none;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  animation: playAgainPulse 2s ease infinite;
+  transition: transform 0.15s;
+  margin-top: 0.5rem;
+}
+.play-again-btn:hover {
+  transform: scale(1.05);
+}
+
+/* ─── Confetti ────────────────────────────────── */
+.confetti-piece {
+  position: absolute;
+  top: -30px;
+  border-radius: 2px;
+  animation: confettiFall linear infinite;
+  pointer-events: none;
+  z-index: 201;
+}
+```
+
+---
+
+## Task 5: Render Functions — Setup Screen
+
+Add this function to the `<script>` block:
+
+```javascript
+function renderSetup() {
+  const app = document.getElementById('app');
+  app.innerHTML = `
+    <div class="setup-screen">
+      <div class="setup-logo-row">
+        <div class="bp-logo-wrap">
+          <img class="bp-logo" src="https://bridgepointbiblechurch.org/wp-content/uploads/2021/01/bridgepoint-logo.png"
+            alt="Bridgepoint Bible Church"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='inline';">
+          <span class="bp-logo-fallback" style="display:none;">Bridgepoint Bible Church</span>
+        </div>
+      </div>
+      <h1 data-tooltip="Yes, it IS better than Michael&#39;s. We checked.">Bible Trivia</h1>
+      <p class="setup-tagline">The quiz that&#39;s definitively better than Michael&#39;s</p>
+      <div class="difficulty-row">
+        ${DIFFICULTIES.map(d => `
+          <div class="diff-card${state.difficulty === d.id ? ' selected' : ''}" data-id="${d.id}" title="${escapeHtml(d.tooltip)}">
+            <div class="diff-card-label">${escapeHtml(d.label)}</div>
+            <div class="diff-card-sub">${escapeHtml(d.tooltip.length > 40 ? d.tooltip.slice(0,40)+'…' : d.tooltip)}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="team-inputs">
+        <div class="form-group">
+          <label for="team1-input">Team 1 Name</label>
+          <input id="team1-input" type="text" placeholder="Team 1" maxlength="20"
+            value="${escapeHtml(state.team1)}" style="border-color: var(--team1);">
+        </div>
+        <div class="form-group">
+          <label for="team2-input">Team 2 Name</label>
+          <input id="team2-input" type="text" placeholder="Team 2" maxlength="20"
+            value="${escapeHtml(state.team2)}" style="border-color: var(--team2);">
+        </div>
+      </div>
+      <button class="start-btn" id="start-btn" ${state.difficulty ? '' : 'disabled'}>
+        Start Game
+      </button>
+    </div>
+  `;
+  bindEvents();
+}
+```
+
+---
+
+## Task 6: Render Functions — Game Header + Battlefield
+
+```javascript
+function renderHeader() {
+  const total = state.scores[0] + state.scores[1];
+  const team1Pct = total === 0 ? 50 : Math.round((state.scores[0] / total) * 100);
+  const team2Pct = 100 - team1Pct;
+  const pickingName = state.pickingTeam === 0 ? (state.team1 || 'Team 1') : (state.team2 || 'Team 2');
+  return `
+    <div class="scoreboard">
+      <div class="score-block team1">
+        <div class="score-name">${escapeHtml(state.team1 || 'Team 1')}</div>
+        <div class="score-value" id="score-val-0">${state.scores[0]}</div>
+      </div>
+      <div class="scoreboard-center">
+        <div class="bp-logo-wrap">
+          <img class="bp-logo" style="height:32px;" src="https://bridgepointbiblechurch.org/wp-content/uploads/2021/01/bridgepoint-logo.png"
+            alt="Bridgepoint Bible Church"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='inline';">
+          <span class="bp-logo-fallback" style="display:none;">Bridgepoint</span>
+        </div>
+        <div class="picking-label">picking</div>
+        <div class="picking-team">${escapeHtml(pickingName)}</div>
+      </div>
+      <div class="score-block team2">
+        <div class="score-name">${escapeHtml(state.team2 || 'Team 2')}</div>
+        <div class="score-value" id="score-val-1">${state.scores[1]}</div>
+      </div>
+    </div>
+    ${renderBattlefield(team1Pct, team2Pct)}
+    <button id="mute-btn" title="Toggle sound">${state.muted ? '🔇' : '🔊'}</button>
+  `;
+}
+
+function renderBattlefield(team1Pct, team2Pct) {
+  return `
+    <div class="battlefield-wrap">
+      <div class="battlefield-bar" style="width:${team1Pct}%;"></div>
+      <div class="battlefield-right" style="width:${team2Pct}%;"></div>
+    </div>
+  `;
+}
+```
+
+---
+
+## Task 7: Render Functions — Category Board
+
+```javascript
+function renderCategoryBoard() {
+  const app = document.getElementById('app');
+  const pickingName = state.pickingTeam === 0 ? (state.team1 || 'Team 1') : (state.team2 || 'Team 2');
+  app.innerHTML = `
+    ${renderHeader()}
+    <div class="category-board">
+      <div class="category-board-title">
+        <strong>${escapeHtml(pickingName)}</strong> — pick a category
+      </div>
+      <div class="category-grid">
+        ${CATEGORIES.map(cat => {
+          const used = state.usedQuestions[cat.id] ? state.usedQuestions[cat.id].size : 0;
+          const total = QUESTION_BANK[cat.id][state.difficulty].length;
+          const exhausted = used >= total;
+          return `
+            <div class="category-card${exhausted ? ' exhausted' : ''}" data-category="${cat.id}">
+              <div class="category-card-emoji">${cat.emoji}</div>
+              <div class="category-card-label">${escapeHtml(cat.label)}</div>
+              <div class="category-card-count">${exhausted ? 'No more questions' : `${total - used} left`}</div>
+              ${exhausted ? '<div class="exhausted-overlay">No more questions</div>' : ''}
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `;
+  bindEvents();
+}
+```
+
+---
+
+## Task 8: Render Functions — Question + Reveal + Second Chance
+
+```javascript
+function renderQuestion() {
+  const app = document.getElementById('app');
+  const q = state.currentQuestion;
+  const labels = ['A', 'B', 'C', 'D'];
+  const catLabel = CATEGORIES.find(c => c.id === state.currentCategory)?.label || '';
+  app.innerHTML = `
+    ${renderHeader()}
+    <div class="question-screen">
+      <div class="question-category-badge">${escapeHtml(catLabel)}</div>
+      <div class="question-card">${escapeHtml(q.q)}</div>
+      <div class="options-grid">
+        ${q.shuffledOptions.map((opt, i) => `
+          <div class="option-card">
+            <span class="option-label">${labels[i]}</span>
+            ${escapeHtml(opt)}
+          </div>
+        `).join('')}
+      </div>
+      <div class="buzz-area">
+        <button class="buzz-btn" data-team="0">${escapeHtml(state.team1 || 'Team 1')} buzzed!</button>
+        <button class="buzz-btn" data-team="1">${escapeHtml(state.team2 || 'Team 2')} buzzed!</button>
+      </div>
+    </div>
+  `;
+  bindEvents();
+}
+
+function renderReveal() {
+  const app = document.getElementById('app');
+  const q = state.currentQuestion;
+  const labels = ['A', 'B', 'C', 'D'];
+  const catLabel = CATEGORIES.find(c => c.id === state.currentCategory)?.label || '';
+  const buzzedName = state.buzzedTeam === 0 ? (state.team1 || 'Team 1') : (state.team2 || 'Team 2');
+  const buzzedClass = state.buzzedTeam === 0 ? 'team1' : 'team2';
+  app.innerHTML = `
+    ${renderHeader()}
+    <div class="question-screen">
+      <div class="question-category-badge">${escapeHtml(catLabel)}</div>
+      <div class="question-card">${escapeHtml(q.q)}</div>
+      <div class="options-grid">
+        ${q.shuffledOptions.map((opt, i) => `
+          <div class="option-card${opt === q.answer ? ' correct' : ''}">
+            <span class="option-label">${labels[i]}</span>
+            ${escapeHtml(opt)}
+          </div>
+        `).join('')}
+      </div>
+      <div class="reveal-area">
+        <div class="buzzed-team-display ${buzzedClass}">${escapeHtml(buzzedName)} buzzed in</div>
+        <div class="verdict-buttons">
+          <button id="correct-btn">✓ Correct</button>
+          <button id="wrong-btn">✗ Wrong</button>
+        </div>
+      </div>
+    </div>
+  `;
+  bindEvents();
+}
+
+function renderSecondChance() {
+  const app = document.getElementById('app');
+  const q = state.currentQuestion;
+  const labels = ['A', 'B', 'C', 'D'];
+  const catLabel = CATEGORIES.find(c => c.id === state.currentCategory)?.label || '';
+  const otherTeam = state.buzzedTeam === 0 ? 1 : 0;
+  const otherName = otherTeam === 0 ? (state.team1 || 'Team 1') : (state.team2 || 'Team 2');
+  const flavorText = WRONG_FLAVORS[state.wrongFlavorIndex % WRONG_FLAVORS.length];
+  app.innerHTML = `
+    ${renderHeader()}
+    <div class="question-screen">
+      <div class="second-chance-banner">
+        ⚡ ${escapeHtml(otherName)} gets a second chance!
+      </div>
+      <div class="question-category-badge">${escapeHtml(catLabel)}</div>
+      <div class="question-card">${escapeHtml(q.q)}</div>
+      <div class="options-grid">
+        ${q.shuffledOptions.map((opt, i) => `
+          <div class="option-card${opt === q.answer ? ' correct' : ''}">
+            <span class="option-label">${labels[i]}</span>
+            ${escapeHtml(opt)}
+          </div>
+        `).join('')}
+      </div>
+      <div class="reveal-area">
+        <div class="flavor-text">${escapeHtml(flavorText)}</div>
+        <div class="buzz-area" style="margin-top:0; width:100%;">
+          <button class="buzz-btn" data-team="0" ${otherTeam !== 0 ? 'disabled' : ''}>${escapeHtml(state.team1 || 'Team 1')} buzzed!</button>
+          <button class="buzz-btn" data-team="1" ${otherTeam !== 1 ? 'disabled' : ''}>${escapeHtml(state.team2 || 'Team 2')} buzzed!</button>
+        </div>
+        <div class="verdict-buttons">
+          <button id="sc-correct-btn">✓ Correct (+1 for ${escapeHtml(otherName)})</button>
+          <button id="sc-wrong-btn">✗ Wrong (0 pts)</button>
+        </div>
+      </div>
+    </div>
+  `;
+  bindEvents();
+}
+```
+
+---
+
+## Task 9: Render Function — Win Screen + Confetti
+
+```javascript
+function renderWin() {
+  const app = document.getElementById('app');
+  const winnerIdx = state.scores[0] >= WIN_SCORE ? 0 : 1;
+  const winnerName = winnerIdx === 0 ? (state.team1 || 'Team 1') : (state.team2 || 'Team 2');
+  const winnerClass = winnerIdx === 0 ? 'team1' : 'team2';
+  const loserScore = state.scores[winnerIdx === 0 ? 1 : 0];
+  const isPerfect = loserScore === 0;
+  const tagline = isPerfect
+    ? "Michael is crying somewhere right now."
+    : "Even Michael couldn't argue with that score.";
+
+  const confettiColors = [
+    '#f59e0b','#3b82f6','#ef4444','#22c55e','#a855f7','#ec4899','#06b6d4','#f97316'
+  ];
+  const confettiHtml = Array.from({ length: 50 }, (_, i) => {
+    const color = confettiColors[i % confettiColors.length];
+    const size = 8 + Math.floor(Math.random() * 10);
+    const left = Math.random() * 100;
+    const delay = (Math.random() * 4).toFixed(2);
+    const duration = (3 + Math.random() * 3).toFixed(2);
+    return `<div class="confetti-piece" style="left:${left.toFixed(1)}%;width:${size}px;height:${size * 0.6}px;background:${color};animation-duration:${duration}s;animation-delay:${delay}s;"></div>`;
+  }).join('');
+
+  app.innerHTML = `
+    <div class="win-screen">
+      ${confettiHtml}
+      <div class="win-title">🏆 Winner 🏆</div>
+      <div class="win-winner-name ${winnerClass}">${escapeHtml(winnerName)} wins!</div>
+      <div class="win-scores">
+        <div class="win-score-block team1">
+          <span>${escapeHtml(state.team1 || 'Team 1')}</span>
+          <span class="win-score-val">${state.scores[0]}</span>
+        </div>
+        <div class="win-score-block team2">
+          <span>${escapeHtml(state.team2 || 'Team 2')}</span>
+          <span class="win-score-val">${state.scores[1]}</span>
+        </div>
+      </div>
+      <div class="win-tagline">${escapeHtml(tagline)}</div>
+      <button class="play-again-btn" id="play-again-btn">Play Again</button>
+    </div>
+  `;
+  sfxWin();
+  bindEvents();
+}
+```
+
+---
+
+## Task 10: Game Logic
+
+```javascript
+function startGame() {
+  const t1 = document.getElementById('team1-input')?.value.trim() || 'Team 1';
+  const t2 = document.getElementById('team2-input')?.value.trim() || 'Team 2';
+  state.team1 = t1;
+  state.team2 = t2;
+  state.scores = [0, 0];
+  state.pickingTeam = 0;
+  state.currentQuestion = null;
+  state.currentCategory = null;
+  state.buzzedTeam = null;
+  state.usedQuestions = {};
+  state.wrongFlavorIndex = 0;
+  state.phase = 'category-board';
+  initBgMusic();
+  render();
+}
+
+function pickCategory(categoryId) {
+  const q = getRandomQuestion(categoryId);
+  if (!q) return; // exhausted, shouldn't be clickable but guard anyway
+  state.currentCategory = categoryId;
+  state.currentQuestion = q;
+  state.buzzedTeam = null;
+  state.phase = 'buzz';
+  render();
+}
+
+function getRandomQuestion(categoryId) {
+  const pool = QUESTION_BANK[categoryId][state.difficulty];
+  if (!state.usedQuestions[categoryId]) {
+    state.usedQuestions[categoryId] = new Set();
+  }
+  const used = state.usedQuestions[categoryId];
+  const available = pool.map((_, i) => i).filter(i => !used.has(i));
+  if (available.length === 0) return null;
+  const idx = available[Math.floor(Math.random() * available.length)];
+  used.add(idx);
+  const q = pool[idx];
+  return {
+    q: q.q,
+    options: q.options,
+    answer: q.answer,
+    shuffledOptions: shuffle(q.options),
+  };
+}
+
+function handleBuzz(teamIndex) {
+  state.buzzedTeam = teamIndex;
+  state.phase = 'reveal';
+  sfxBuzz();
+  render();
+}
+
+function handleCorrect() {
+  state.scores[state.buzzedTeam]++;
+  sfxPoint();
+  // Animate score
+  setTimeout(() => {
+    const el = document.getElementById(`score-val-${state.buzzedTeam}`);
+    if (el) { el.classList.remove('popping'); void el.offsetWidth; el.classList.add('popping'); }
+  }, 50);
+  // Shimmer battlefield
+  setTimeout(() => {
+    document.querySelector('.battlefield-bar')?.classList.add('battlefield-shimmer');
+    document.querySelector('.battlefield-right')?.classList.add('battlefield-shimmer');
+  }, 50);
+  if (checkWin()) {
+    state.phase = 'win';
+    render();
+    return;
+  }
+  advancePickingTeam();
+  state.phase = 'category-board';
+  render();
+}
+
+function handleWrong() {
+  sfxWrong();
+  state.wrongFlavorIndex++;
+  state.phase = 'second-chance';
+  render();
+}
+
+function handleSecondChanceCorrect() {
+  const otherTeam = state.buzzedTeam === 0 ? 1 : 0;
+  state.scores[otherTeam]++;
+  sfxPoint();
+  setTimeout(() => {
+    const el = document.getElementById(`score-val-${otherTeam}`);
+    if (el) { el.classList.remove('popping'); void el.offsetWidth; el.classList.add('popping'); }
+  }, 50);
+  if (checkWin()) {
+    state.phase = 'win';
+    render();
+    return;
+  }
+  // Other team scored, so they pick next
+  state.pickingTeam = otherTeam;
+  state.phase = 'category-board';
+  render();
+}
+
+function handleSecondChanceWrong() {
+  sfxWrong();
+  // No points. Original picking team's turn continues.
+  state.phase = 'category-board';
+  render();
+}
+
+function advancePickingTeam() {
+  state.pickingTeam = state.pickingTeam === 0 ? 1 : 0;
+}
+
+function checkWin() {
+  return state.scores[0] >= WIN_SCORE || state.scores[1] >= WIN_SCORE;
+}
+
+function getNextWrongFlavor() {
+  const flavor = WRONG_FLAVORS[state.wrongFlavorIndex % WRONG_FLAVORS.length];
+  state.wrongFlavorIndex++;
+  return flavor;
+}
+```
+
+---
+
+## Task 11: `bindEvents` + `render()` Dispatch
+
+```javascript
+function render() {
+  switch (state.phase) {
+    case 'setup':          renderSetup();         break;
+    case 'category-board': renderCategoryBoard(); break;
+    case 'buzz':           renderQuestion();      break;
+    case 'reveal':         renderReveal();        break;
+    case 'second-chance':  renderSecondChance();  break;
+    case 'win':            renderWin();           break;
+  }
+}
+
+function bindEvents() {
+  // Setup
+  document.querySelectorAll('.diff-card').forEach(card => {
+    card.addEventListener('click', () => {
+      state.difficulty = card.dataset.id;
+      // Update UI without full re-render: toggle selected class
+      document.querySelectorAll('.diff-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      const startBtn = document.getElementById('start-btn');
+      if (startBtn) startBtn.disabled = false;
+    });
+  });
+
+  document.getElementById('start-btn')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (!state.difficulty) return;
+    startGame();
+  });
+
+  // Category board
+  document.querySelectorAll('.category-card:not(.exhausted)').forEach(card => {
+    card.addEventListener('click', () => {
+      pickCategory(card.dataset.category);
+    });
+  });
+
+  // Buzz buttons (buzz phase)
+  document.querySelectorAll('.buzz-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      if (this.disabled) return;
+      handleBuzz(parseInt(this.dataset.team, 10));
+    });
+  });
+
+  // Reveal verdict
+  document.getElementById('correct-btn')?.addEventListener('click', handleCorrect);
+  document.getElementById('wrong-btn')?.addEventListener('click', handleWrong);
+
+  // Second chance verdict
+  document.getElementById('sc-correct-btn')?.addEventListener('click', handleSecondChanceCorrect);
+  document.getElementById('sc-wrong-btn')?.addEventListener('click', handleSecondChanceWrong);
+
+  // Win screen
+  document.getElementById('play-again-btn')?.addEventListener('click', () => {
+    state.phase = 'setup';
+    render();
+  });
+
+  // Mute button
+  document.getElementById('mute-btn')?.addEventListener('click', toggleMute);
+}
+```
+
+---
+
+## Task 12: Wire Everything into index.html + Test + Commit
+
+- [ ] Assemble the complete `index.html` in this exact order:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Better Quiz Than Michael's | Bridgepoint Bible Church</title>
+  <style>
+    /* === FULL CSS FROM TASK 4 === */
+  </style>
+</head>
+<body>
+  <audio id="bg-music" loop src="https://assets.mixkit.co/music/preview/mixkit-games-worldbeat-466.mp3"></audio>
+  <div id="app"></div>
+  <script>
+    // 1. QUESTION_BANK (Task 1)
+    // 2. shuffle() + escapeHtml() helpers (Task 1)
+    // 3. WIN_SCORE, CATEGORIES, DIFFICULTIES, WRONG_FLAVORS, state (Task 2)
+    // 4. Audio module: getAudioCtx, playTone, sfx*, initBgMusic, toggleMute (Task 3)
+    // 5. renderSetup (Task 5)
+    // 6. renderHeader + renderBattlefield (Task 6)
+    // 7. renderCategoryBoard (Task 7)
+    // 8. renderQuestion + renderReveal + renderSecondChance (Task 8)
+    // 9. renderWin (Task 9)
+    // 10. Game logic: startGame, pickCategory, getRandomQuestion, handleBuzz,
+    //     handleCorrect, handleWrong, handleSecondChanceCorrect, handleSecondChanceWrong,
+    //     advancePickingTeam, checkWin, getNextWrongFlavor (Task 10)
+    // 11. render() dispatch + bindEvents() (Task 11)
+    // 12. Kick off: render();
+  </script>
+</body>
+</html>
+```
+
+The Bridgepoint logo `<img>` tag to use (with fallback):
+```html
+<img class="bp-logo"
+  src="https://bridgepointbiblechurch.org/wp-content/uploads/2021/01/bridgepoint-logo.png"
+  alt="Bridgepoint Bible Church"
+  onerror="this.style.display='none';this.nextElementSibling.style.display='inline';">
+<span class="bp-logo-fallback" style="display:none;">Bridgepoint Bible Church</span>
+```
+
+- [ ] Manual test checklist:
+  - [ ] Open `index.html` in browser — animated dark background, no console errors
+  - [ ] Select difficulty, enter team names, Start Game button activates only after difficulty is selected
+  - [ ] Category board shows 6 cards, correct team's turn shown in gold
+  - [ ] Pick a category → question loads with shuffled options
+  - [ ] Buzz Team 1 → reveal phase shows correct answer glowing green
+  - [ ] Click Correct → score increments with pop animation, battlefield bar shifts smoothly
+  - [ ] Click Wrong → second-chance phase appears with other team's button active, snarky flavor text
+  - [ ] Answer correctly in second chance → other team scores, they pick next
+  - [ ] Answer wrong in second chance → no points, original team still picks
+  - [ ] Play to 10 points → win screen with confetti and sfxWin fanfare
+  - [ ] Play Again → back to setup screen
+  - [ ] Mute button (🔊/🔇) in top-right toggles audio on/off
+  - [ ] Exhausted categories show "No more questions" overlay and are unclickable
+  - [ ] Bob Stanberry difficulty card shows snarky tooltip on hover
+  - [ ] Bridgepoint logo appears top-left; fallback text shown if image fails
+
+- [ ] Commit:
+  ```bash
+  git add index.html
+  git commit -m "feat: bible trivia v2 — categories, difficulty, first-to-10, animations, audio, branding"
+  ```

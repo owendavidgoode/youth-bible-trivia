@@ -46,6 +46,7 @@
       align-items: center;
       gap: 2rem;
       padding: 2rem;
+      flex: 1;
     }
 
     .setup-screen h1 {
@@ -288,6 +289,7 @@
       align-items: center;
       gap: 2rem;
       padding: 2rem;
+      flex: 1;
     }
 
     .end-screen h2 {
@@ -391,6 +393,10 @@
       buzzedTeam: null,
     };
 
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
     function render() {
       const app = document.getElementById('app');
       switch (state.phase) {
@@ -414,12 +420,12 @@
       return `
         <div class="scoreboard">
           <div class="score-team1">
-            <div class="score-label">${state.team1}</div>
+            <div class="score-label">${escapeHtml(state.team1)}</div>
             <div>${state.scores[0]}</div>
           </div>
           <div class="scoreboard-center">Question ${state.questionIndex + 1} of ${QUESTIONS.length}</div>
           <div class="score-team2">
-            <div class="score-label">${state.team2}</div>
+            <div class="score-label">${escapeHtml(state.team2)}</div>
             <div>${state.scores[1]}</div>
           </div>
         </div>
@@ -430,15 +436,17 @@
       return `
         <div class="setup-screen">
           <h1>Bible Trivia</h1>
-          <div class="form-group">
-            <label for="team1-input">Team 1 Name</label>
-            <input id="team1-input" type="text" placeholder="Team 1" maxlength="20">
-          </div>
-          <div class="form-group">
-            <label for="team2-input">Team 2 Name</label>
-            <input id="team2-input" type="text" placeholder="Team 2" maxlength="20">
-          </div>
-          <button id="start-btn">Start Game</button>
+          <form id="setup-form">
+            <div class="form-group">
+              <label for="team1-input">Team 1 Name</label>
+              <input id="team1-input" type="text" placeholder="Team 1" maxlength="20">
+            </div>
+            <div class="form-group">
+              <label for="team2-input">Team 2 Name</label>
+              <input id="team2-input" type="text" placeholder="Team 2" maxlength="20">
+            </div>
+            <button id="start-btn" type="submit">Start Game</button>
+          </form>
         </div>
       `;
     }
@@ -460,8 +468,8 @@
             `).join('')}
           </div>
           <div class="buzz-area">
-            <button class="buzz-btn" data-team="0">${state.team1} buzzed!</button>
-            <button class="buzz-btn" data-team="1">${state.team2} buzzed!</button>
+            <button class="buzz-btn" data-team="0">${escapeHtml(state.team1)} buzzed!</button>
+            <button class="buzz-btn" data-team="1">${escapeHtml(state.team2)} buzzed!</button>
           </div>
         </div>
       `;
@@ -487,7 +495,7 @@
             `).join('')}
           </div>
           <div class="reveal-area">
-            <div class="buzzed-team-display ${buzzedTeamClass}">${buzzedTeamName}</div>
+            <div class="buzzed-team-display ${buzzedTeamClass}">${escapeHtml(buzzedTeamName)}</div>
             <div class="verdict-buttons">
               <button id="correct-btn">Correct</button>
               <button id="wrong-btn">Wrong</button>
@@ -504,16 +512,16 @@
       return `
         <div class="end-screen">
           <h2>Game Over</h2>
-          <div class="winner-name ${winnerClass}">
-            ${winner ? `${winner} wins!` : "It's a tie!"}
+          <div class="winner-name ${winnerClass ?? ''}">
+            ${winner ? `${escapeHtml(winner)} wins!` : "It's a tie!"}
           </div>
           <div class="final-scores">
             <div class="final-score-team team1">
-              <div>${state.team1}</div>
+              <div>${escapeHtml(state.team1)}</div>
               <div class="final-score-value">${state.scores[0]}</div>
             </div>
             <div class="final-score-team team2">
-              <div>${state.team2}</div>
+              <div>${escapeHtml(state.team2)}</div>
               <div class="final-score-value">${state.scores[1]}</div>
             </div>
           </div>
@@ -549,7 +557,10 @@
     }
 
     function bindEvents() {
-      document.getElementById('start-btn')?.addEventListener('click', startGame);
+      document.getElementById('setup-form')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        startGame();
+      });
 
       document.querySelectorAll('.buzz-btn').forEach(btn => {
         btn.addEventListener('click', function() {

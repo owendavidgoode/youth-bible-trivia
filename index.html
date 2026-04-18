@@ -750,6 +750,107 @@ body {
   transform: scale(1.05);
 }
 
+/* ─── Splash Screen ──────────────────────────── */
+.splash-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2.5rem;
+  background: linear-gradient(135deg, #050510 0%, #0d0020 50%, #050510 100%);
+  z-index: 500;
+  animation: fadeIn 0.6s ease both;
+  text-align: center;
+  padding: 2rem;
+}
+.splash-question {
+  font-size: 4rem;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 40px rgba(59,130,246,0.6), 0 0 80px rgba(59,130,246,0.2);
+  line-height: 1.2;
+}
+.splash-sub {
+  font-size: 1.1rem;
+  color: var(--muted);
+  font-style: italic;
+}
+.splash-buttons {
+  display: flex;
+  gap: 2rem;
+}
+.splash-yes {
+  padding: 1.1rem 3rem;
+  font-size: 1.5rem;
+  font-weight: bold;
+  font-family: 'Georgia', serif;
+  background: linear-gradient(135deg, #15803d, #22c55e);
+  color: white;
+  border: none;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  box-shadow: 0 0 24px rgba(34,197,94,0.5);
+  transition: transform 0.15s, box-shadow 0.2s;
+  letter-spacing: 0.05em;
+}
+.splash-yes:hover {
+  transform: translateY(-3px) scale(1.04);
+  box-shadow: 0 0 40px rgba(34,197,94,0.8);
+}
+.splash-no {
+  padding: 1.1rem 3rem;
+  font-size: 1.5rem;
+  font-weight: bold;
+  font-family: 'Georgia', serif;
+  background: var(--surface);
+  color: var(--muted);
+  border: 2px solid var(--surface-border);
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: transform 0.15s, opacity 0.2s;
+}
+.splash-no:hover {
+  opacity: 0.7;
+  transform: translateY(1px);
+}
+
+/* ─── Laser Mike Reveal ───────────────────────── */
+@keyframes laserZoom {
+  0%   { transform: scale(1.15); opacity: 0; filter: brightness(2) saturate(0); }
+  20%  { opacity: 1; filter: brightness(1.3) saturate(1.2); }
+  85%  { transform: scale(1.03); filter: brightness(1) saturate(1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes laserGlow {
+  0%, 100% { box-shadow: 0 0 60px rgba(59,130,246,0.4), 0 0 120px rgba(239,68,68,0.2); }
+  50%       { box-shadow: 0 0 100px rgba(59,130,246,0.8), 0 0 200px rgba(239,68,68,0.4); }
+}
+.laser-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  z-index: 500;
+  overflow: hidden;
+}
+.laser-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: laserZoom 2.5s cubic-bezier(0.2, 0, 0.4, 1) both;
+}
+.laser-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.7) 100%);
+  pointer-events: none;
+  animation: laserGlow 1.5s ease infinite;
+}
+
 /* ─── Confetti ────────────────────────────────── */
 .confetti-piece {
   position: absolute;
@@ -1422,8 +1523,36 @@ body {
     }
 
     // ─── 11. render() dispatch + bindEvents() ─────────────────────────────────
+    function renderSplash() {
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <div class="splash-screen">
+          <div class="splash-question">Are you ready?</div>
+          <p class="splash-sub">betterquizthanmichael.com</p>
+          <div class="splash-buttons">
+            <button class="splash-yes" id="splash-yes">Yes</button>
+            <button class="splash-no" id="splash-no">No</button>
+          </div>
+        </div>
+      `;
+      bindEvents();
+    }
+
+    function renderLaserMike() {
+      const app = document.getElementById('app');
+      app.innerHTML = `
+        <div class="laser-screen">
+          <img class="laser-img" src="laser-mike.jpg" alt="Laser Mike">
+          <div class="laser-overlay"></div>
+        </div>
+      `;
+      setTimeout(() => { state.phase = 'setup'; render(); }, 2500);
+    }
+
     function render() {
       switch (state.phase) {
+        case 'splash':         renderSplash();        break;
+        case 'laser-reveal':   renderLaserMike();     break;
         case 'setup':          renderSetup();         break;
         case 'category-board': renderCategoryBoard(); break;
         case 'buzz':           renderQuestion();      break;
@@ -1475,9 +1604,20 @@ body {
       });
 
       document.getElementById('mute-btn')?.addEventListener('click', toggleMute);
+
+      document.getElementById('splash-yes')?.addEventListener('click', () => {
+        sessionStorage.setItem('gameReady', '1');
+        state.phase = 'laser-reveal';
+        render();
+      });
+
+      document.getElementById('splash-no')?.addEventListener('click', () => {
+        window.location.href = 'https://finance.yahoo.com';
+      });
     }
 
     // ─── 12. Kick off ──────────────────────────────────────────────────────────
+    state.phase = sessionStorage.getItem('gameReady') ? 'setup' : 'splash';
     render();
   </script>
 </body>

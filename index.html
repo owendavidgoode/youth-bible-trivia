@@ -12,17 +12,17 @@
 }
 
 :root {
-  --bg-from: #0a0a1a;
-  --bg-to: #1a0a2e;
-  --surface: rgba(255,255,255,0.05);
-  --surface-border: rgba(255,255,255,0.1);
-  --team1: #3b82f6;
-  --team2: #ef4444;
-  --correct: #22c55e;
-  --wrong: #ef4444;
-  --gold: #f59e0b;
-  --text: #f0f0f0;
-  --muted: #8888aa;
+  --bg-from: #000008;
+  --bg-to: #080020;
+  --surface: rgba(0,229,255,0.05);
+  --surface-border: rgba(0,229,255,0.12);
+  --team1: #00e5ff;
+  --team2: #ff2d78;
+  --correct: #39ff14;
+  --wrong: #ff2d78;
+  --gold: #ffe200;
+  --text: #e8f4ff;
+  --muted: #5580a0;
 }
 
 @keyframes bgPulse {
@@ -53,8 +53,8 @@
 }
 
 @keyframes correctPulse {
-  0%, 100% { box-shadow: 0 0 12px rgba(34,197,94,0.5); }
-  50%       { box-shadow: 0 0 28px rgba(34,197,94,1), 0 0 50px rgba(34,197,94,0.4); }
+  0%, 100% { box-shadow: 0 0 12px rgba(57,255,20,0.5); }
+  50%       { box-shadow: 0 0 32px rgba(57,255,20,1), 0 0 60px rgba(57,255,20,0.4); }
 }
 
 @keyframes buzzFlash {
@@ -80,9 +80,9 @@
 }
 
 body {
-  background: linear-gradient(135deg, var(--bg-from) 0%, #160f2a 40%, var(--bg-to) 100%);
+  background: linear-gradient(135deg, var(--bg-from) 0%, #0a0028 35%, #000f1a 65%, var(--bg-to) 100%);
   background-size: 400% 400%;
-  animation: bgPulse 12s ease infinite;
+  animation: bgPulse 18s ease infinite;
   color: var(--text);
   font-family: 'Georgia', serif;
   font-size: 1.125rem;
@@ -162,7 +162,7 @@ body {
 .setup-screen h1 {
   font-size: 3.5rem;
   letter-spacing: 0.04em;
-  text-shadow: 0 0 24px rgba(59,130,246,0.5), 0 2px 8px rgba(0,0,0,0.8);
+  text-shadow: 0 0 30px rgba(0,229,255,0.8), 0 0 60px rgba(0,229,255,0.35), 0 0 100px rgba(255,45,120,0.2), 0 2px 8px rgba(0,0,0,0.9);
   text-align: center;
   cursor: default;
 }
@@ -272,19 +272,19 @@ body {
   font-size: 1.3rem;
   font-weight: bold;
   font-family: 'Georgia', serif;
-  background: linear-gradient(135deg, #2563eb, #3b82f6);
-  color: white;
+  background: linear-gradient(135deg, #007a8a, #00b8d4, #00e5ff);
+  color: #000c10;
   border: none;
   border-radius: 0.75rem;
   cursor: pointer;
   letter-spacing: 0.04em;
   transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
-  box-shadow: 0 0 20px rgba(59,130,246,0.4);
+  box-shadow: 0 0 24px rgba(0,229,255,0.5), 0 0 48px rgba(0,229,255,0.2);
 }
 .start-btn:hover:not(:disabled) {
   opacity: 0.9;
   transform: translateY(-2px);
-  box-shadow: 0 0 30px rgba(59,130,246,0.6);
+  box-shadow: 0 0 40px rgba(0,229,255,0.8), 0 0 80px rgba(0,229,255,0.3);
 }
 .start-btn:disabled {
   opacity: 0.35;
@@ -366,18 +366,18 @@ body {
   top: 0;
   left: 0;
   height: 100%;
-  background: linear-gradient(90deg, var(--team1), #1d4ed8);
+  background: linear-gradient(90deg, #007a8a, var(--team1));
   transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 2px 0 12px rgba(59,130,246,0.7);
+  box-shadow: 2px 0 16px rgba(0,229,255,0.9);
 }
 .battlefield-right {
   position: absolute;
   top: 0;
   right: 0;
   height: 100%;
-  background: linear-gradient(270deg, var(--team2), #b91c1c);
+  background: linear-gradient(270deg, #cc0055, var(--team2));
   transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: -2px 0 12px rgba(239,68,68,0.7);
+  box-shadow: -2px 0 16px rgba(255,45,120,0.9);
 }
 .battlefield-shimmer {
   animation: battlefieldShimmer 0.6s ease both;
@@ -572,22 +572,23 @@ body {
   text-shadow: 0 1px 4px rgba(0,0,0,0.5);
 }
 .buzz-btn[data-team="0"] {
-  background: linear-gradient(135deg, #1d4ed8, #3b82f6, #60a5fa);
-  box-shadow: 0 0 20px rgba(59,130,246,0.5);
+  background: linear-gradient(135deg, #004a55, #00a0b8, #00e5ff);
+  box-shadow: 0 0 28px rgba(0,229,255,0.5), inset 0 1px 0 rgba(255,255,255,0.15);
+  color: #001820;
 }
 .buzz-btn[data-team="1"] {
-  background: linear-gradient(135deg, #b91c1c, #ef4444, #f87171);
-  box-shadow: 0 0 20px rgba(239,68,68,0.5);
+  background: linear-gradient(135deg, #660028, #cc0055, #ff2d78);
+  box-shadow: 0 0 28px rgba(255,45,120,0.5), inset 0 1px 0 rgba(255,255,255,0.1);
 }
 .buzz-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  filter: brightness(1.1);
+  filter: brightness(1.15);
 }
 .buzz-btn[data-team="0"]:hover:not(:disabled) {
-  box-shadow: 0 0 36px rgba(59,130,246,0.8);
+  box-shadow: 0 0 56px rgba(0,229,255,0.9), 0 0 100px rgba(0,229,255,0.3);
 }
 .buzz-btn[data-team="1"]:hover:not(:disabled) {
-  box-shadow: 0 0 36px rgba(239,68,68,0.8);
+  box-shadow: 0 0 56px rgba(255,45,120,0.9), 0 0 100px rgba(255,45,120,0.3);
 }
 .buzz-btn:active:not(:disabled) {
   animation: buzzFlash 0.25s ease both;
@@ -649,12 +650,13 @@ body {
   transform: translateY(-1px);
 }
 #correct-btn {
-  background: linear-gradient(135deg, #15803d, #22c55e);
-  box-shadow: 0 0 16px rgba(34,197,94,0.4);
+  background: linear-gradient(135deg, #1a7a00, #28cc00, #39ff14);
+  color: #001a00;
+  box-shadow: 0 0 20px rgba(57,255,20,0.45);
 }
 #wrong-btn {
-  background: linear-gradient(135deg, #b91c1c, #ef4444);
-  box-shadow: 0 0 16px rgba(239,68,68,0.4);
+  background: linear-gradient(135deg, #660028, #cc0055, #ff2d78);
+  box-shadow: 0 0 20px rgba(255,45,120,0.45);
 }
 
 /* ─── Second Chance Banner ────────────────────── */
@@ -681,7 +683,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: rgba(5,5,20,0.96);
+  background: rgba(0,0,8,0.97);
   z-index: 200;
   gap: 1.5rem;
   padding: 2rem;
@@ -768,8 +770,8 @@ body {
 .splash-question {
   font-size: 4rem;
   font-weight: bold;
-  letter-spacing: 0.05em;
-  text-shadow: 0 0 40px rgba(59,130,246,0.6), 0 0 80px rgba(59,130,246,0.2);
+  letter-spacing: 0.06em;
+  text-shadow: 0 0 40px rgba(0,229,255,0.9), 0 0 80px rgba(0,229,255,0.4), 0 0 140px rgba(255,45,120,0.25);
   line-height: 1.2;
 }
 .splash-sub {
@@ -786,18 +788,18 @@ body {
   font-size: 1.5rem;
   font-weight: bold;
   font-family: 'Georgia', serif;
-  background: linear-gradient(135deg, #15803d, #22c55e);
-  color: white;
+  background: linear-gradient(135deg, #004a55, #00b8d4, #00e5ff);
+  color: #001820;
   border: none;
   border-radius: 0.75rem;
   cursor: pointer;
-  box-shadow: 0 0 24px rgba(34,197,94,0.5);
+  box-shadow: 0 0 28px rgba(0,229,255,0.6), 0 0 56px rgba(0,229,255,0.2);
   transition: transform 0.15s, box-shadow 0.2s;
   letter-spacing: 0.05em;
 }
 .splash-yes:hover {
   transform: translateY(-3px) scale(1.04);
-  box-shadow: 0 0 40px rgba(34,197,94,0.8);
+  box-shadow: 0 0 48px rgba(0,229,255,0.9), 0 0 96px rgba(0,229,255,0.4);
 }
 .splash-no {
   padding: 1.1rem 3rem;
@@ -817,15 +819,16 @@ body {
 }
 
 /* ─── Laser Mike Reveal ───────────────────────── */
-@keyframes laserZoom {
-  0%   { transform: scale(1.15); opacity: 0; filter: brightness(2) saturate(0); }
-  20%  { opacity: 1; filter: brightness(1.3) saturate(1.2); }
-  85%  { transform: scale(1.03); filter: brightness(1) saturate(1); }
-  100% { transform: scale(1); opacity: 1; }
+@keyframes laserReveal {
+  0%   { opacity: 0; filter: brightness(5) saturate(0) contrast(3); }
+  15%  { opacity: 1; filter: brightness(2.5) saturate(0) contrast(2); }
+  45%  { filter: brightness(1.5) saturate(0.15) contrast(1.4); }
+  80%  { filter: brightness(1.1) saturate(0.7) contrast(1.1); }
+  100% { filter: brightness(1) saturate(1) contrast(1); }
 }
-@keyframes laserGlow {
-  0%, 100% { box-shadow: 0 0 60px rgba(59,130,246,0.4), 0 0 120px rgba(239,68,68,0.2); }
-  50%       { box-shadow: 0 0 100px rgba(59,130,246,0.8), 0 0 200px rgba(239,68,68,0.4); }
+@keyframes neonVignette {
+  0%, 100% { box-shadow: inset 0 0 80px rgba(0,229,255,0.15), inset 0 0 200px rgba(255,45,120,0.08); }
+  50%       { box-shadow: inset 0 0 140px rgba(0,229,255,0.35), inset 0 0 300px rgba(255,45,120,0.18); }
 }
 .laser-screen {
   position: fixed;
@@ -841,14 +844,14 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  animation: laserZoom 2.5s cubic-bezier(0.2, 0, 0.4, 1) both;
+  animation: laserReveal 3s ease-out both;
 }
 .laser-overlay {
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.7) 100%);
+  background: radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.75) 100%);
   pointer-events: none;
-  animation: laserGlow 1.5s ease infinite;
+  animation: neonVignette 2s ease infinite;
 }
 
 /* ─── Confetti ────────────────────────────────── */
@@ -1542,7 +1545,7 @@ body {
       const app = document.getElementById('app');
       app.innerHTML = `
         <div class="laser-screen">
-          <img class="laser-img" src="laser-mike.jpg" alt="Laser Mike">
+          <img class="laser-img" src="laser-mike.JPG" alt="Laser Mike">
           <div class="laser-overlay"></div>
         </div>
       `;

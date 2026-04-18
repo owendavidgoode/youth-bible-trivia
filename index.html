@@ -819,16 +819,17 @@ body {
 }
 
 /* ─── Laser Mike Reveal ───────────────────────── */
-@keyframes laserReveal {
-  0%   { opacity: 0; filter: brightness(5) saturate(0) contrast(3); }
-  15%  { opacity: 1; filter: brightness(2.5) saturate(0) contrast(2); }
-  45%  { filter: brightness(1.5) saturate(0.15) contrast(1.4); }
-  80%  { filter: brightness(1.1) saturate(0.7) contrast(1.1); }
-  100% { filter: brightness(1) saturate(1) contrast(1); }
+@keyframes laserScreenAnim {
+  0%   { opacity: 0; }
+  12%  { opacity: 1; }
+  72%  { opacity: 1; }
+  100% { opacity: 0; }
 }
-@keyframes neonVignette {
-  0%, 100% { box-shadow: inset 0 0 80px rgba(0,229,255,0.15), inset 0 0 200px rgba(255,45,120,0.08); }
-  50%       { box-shadow: inset 0 0 140px rgba(0,229,255,0.35), inset 0 0 300px rgba(255,45,120,0.18); }
+@keyframes colorReveal {
+  0%   { filter: brightness(5) saturate(0) contrast(3); }
+  25%  { filter: brightness(2) saturate(0) contrast(1.8); }
+  60%  { filter: brightness(1.3) saturate(0.4) contrast(1.2); }
+  100% { filter: brightness(1) saturate(1) contrast(1); }
 }
 .laser-screen {
   position: fixed;
@@ -838,20 +839,88 @@ body {
   justify-content: center;
   background: #000;
   z-index: 500;
-  overflow: hidden;
+  animation: laserScreenAnim 3s ease both;
 }
 .laser-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  animation: laserReveal 3s ease-out both;
+  max-height: 70vh;
+  max-width: 75vw;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 1rem;
+  box-shadow: 0 0 60px rgba(0,229,255,0.3), 0 0 120px rgba(255,45,120,0.15);
+  animation: colorReveal 2s ease-in both;
 }
-.laser-overlay {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.75) 100%);
+
+/* ─── Team Answer Rows (ABCD) ────────────────── */
+.team-answer-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 900px;
+  margin: auto auto 0;
+  width: 100%;
+}
+.team-answer-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.team-answer-row.sc-disabled {
+  opacity: 0.28;
   pointer-events: none;
-  animation: neonVignette 2s ease infinite;
+}
+.team-answer-label {
+  font-size: 0.85rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  min-width: 90px;
+  flex-shrink: 0;
+}
+.team-answer-label.team1 { color: var(--team1); }
+.team-answer-label.team2 { color: var(--team2); }
+.answer-btn {
+  flex: 1;
+  padding: 0.85rem 0;
+  font-size: 1.2rem;
+  font-weight: bold;
+  font-family: 'Georgia', serif;
+  border-radius: 0.6rem;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.15s, border-color 0.15s;
+  letter-spacing: 0.06em;
+}
+.answer-btn.team1 {
+  background: rgba(0,229,255,0.08);
+  border: 2px solid rgba(0,229,255,0.25);
+  color: var(--team1);
+}
+.answer-btn.team1:hover:not(:disabled) {
+  border-color: var(--team1);
+  box-shadow: 0 0 16px rgba(0,229,255,0.5);
+  transform: translateY(-2px);
+  background: rgba(0,229,255,0.15);
+}
+.answer-btn.team2 {
+  background: rgba(255,45,120,0.08);
+  border: 2px solid rgba(255,45,120,0.25);
+  color: var(--team2);
+}
+.answer-btn.team2:hover:not(:disabled) {
+  border-color: var(--team2);
+  box-shadow: 0 0 16px rgba(255,45,120,0.5);
+  transform: translateY(-2px);
+  background: rgba(255,45,120,0.15);
+}
+.answer-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+.option-card.wrong-pick {
+  border-color: var(--wrong);
+  background: rgba(255,45,120,0.1);
+  color: var(--wrong);
 }
 
 /* ─── Confetti ────────────────────────────────── */
@@ -866,7 +935,11 @@ body {
   </style>
 </head>
 <body>
-  <audio id="bg-music" loop src="https://assets.mixkit.co/music/preview/mixkit-games-worldbeat-466.mp3"></audio>
+  <audio id="bg-music" loop>
+    <source src="https://assets.mixkit.co/music/preview/mixkit-game-level-music-689.mp3" type="audio/mpeg">
+    <source src="https://assets.mixkit.co/music/preview/mixkit-halo-688.mp3" type="audio/mpeg">
+    <source src="https://assets.mixkit.co/music/preview/mixkit-games-worldbeat-466.mp3" type="audio/mpeg">
+  </audio>
   <div id="app"></div>
   <script>
     // ─── 1. QUESTION_BANK ──────────────────────────────────────────────────────
@@ -1094,6 +1167,7 @@ body {
       currentQuestion: null,
       currentCategory: null,
       buzzedTeam: null,
+      wrongAnswerOption: null,
       usedQuestions: {},
       wrongFlavorIndex: 0,
       muted: false,
@@ -1122,14 +1196,20 @@ body {
       osc.stop(ctx.currentTime + startDelay + duration + 0.05);
     }
 
-    function sfxBuzz()    { playTone(440, 0.2, 'square', 0.4); }
-    function sfxCorrect() { playTone(523, 0.15, 'sine', 0.4); setTimeout(() => playTone(659, 0.2, 'sine', 0.4), 150); }
-    function sfxWrong()   { playTone(200, 0.15, 'square', 0.3); setTimeout(() => playTone(150, 0.2, 'square', 0.3), 150); }
+    function sfxBuzz()    { playTone(880, 0.06, 'sawtooth', 0.35); playTone(440, 0.12, 'square', 0.25, 0.06); }
+    function sfxCorrect() {
+      [784, 988, 1175].forEach((f, i) => playTone(f, 0.12, 'sine', 0.4, i * 0.1));
+    }
+    function sfxWrong() {
+      playTone(180, 0.08, 'sawtooth', 0.35);
+      playTone(140, 0.15, 'sawtooth', 0.35, 0.08);
+      playTone(100, 0.2, 'square', 0.3, 0.2);
+    }
     function sfxPoint() {
-      [523, 659, 784, 1047].forEach((f, i) => playTone(f, 0.1, 'sine', 0.35, i * 0.08));
+      [523, 659, 784, 988, 1175].forEach((f, i) => playTone(f, 0.09, 'sine', 0.32, i * 0.07));
     }
     function sfxWin() {
-      [262, 330, 392, 523, 659, 784, 1047].forEach((f, i) => playTone(f, 0.15, 'sine', 0.4, i * 0.1));
+      [262, 330, 392, 523, 659, 784, 988, 1175].forEach((f, i) => playTone(f, 0.18, 'sine', 0.38, i * 0.09));
     }
 
     let bgMusic = null;
@@ -1137,8 +1217,9 @@ body {
       if (bgMusic) return;
       bgMusic = document.getElementById('bg-music');
       if (bgMusic) {
-        bgMusic.volume = 0.25;
-        bgMusic.play().catch(() => {});
+        bgMusic.volume = 0.2;
+        bgMusic.play().catch(e => console.warn('BG music blocked:', e));
+        bgMusic.addEventListener('error', () => console.warn('BG music load error'));
       }
     }
     function toggleMute() {
@@ -1265,7 +1346,20 @@ body {
       bindEvents();
     }
 
-    // ─── 8. renderQuestion + renderReveal + renderSecondChance ────────────────
+    // ─── 8. renderQuestion + renderSecondChance ───────────────────────────────
+    function renderTeamAnswerRow(teamIndex, disabled) {
+      const name = teamIndex === 0 ? (state.team1 || 'Team 1') : (state.team2 || 'Team 2');
+      const cls = teamIndex === 0 ? 'team1' : 'team2';
+      return `
+        <div class="team-answer-row${disabled ? ' sc-disabled' : ''}">
+          <span class="team-answer-label ${cls}">${escapeHtml(name)}</span>
+          ${['A','B','C','D'].map((lbl, i) => `
+            <button class="answer-btn ${cls}" data-team="${teamIndex}" data-opt="${i}"${disabled ? ' disabled' : ''}>${lbl}</button>
+          `).join('')}
+        </div>
+      `;
+    }
+
     function renderQuestion() {
       const app = document.getElementById('app');
       const q = state.currentQuestion;
@@ -1284,41 +1378,9 @@ body {
               </div>
             `).join('')}
           </div>
-          <div class="buzz-area">
-            <button class="buzz-btn" data-team="0">${escapeHtml(state.team1 || 'Team 1')} buzzed!</button>
-            <button class="buzz-btn" data-team="1">${escapeHtml(state.team2 || 'Team 2')} buzzed!</button>
-          </div>
-        </div>
-      `;
-      bindEvents();
-    }
-
-    function renderReveal() {
-      const app = document.getElementById('app');
-      const q = state.currentQuestion;
-      const labels = ['A', 'B', 'C', 'D'];
-      const catLabel = CATEGORIES.find(c => c.id === state.currentCategory)?.label || '';
-      const buzzedName = state.buzzedTeam === 0 ? (state.team1 || 'Team 1') : (state.team2 || 'Team 2');
-      const buzzedClass = state.buzzedTeam === 0 ? 'team1' : 'team2';
-      app.innerHTML = `
-        ${renderHeader()}
-        <div class="question-screen">
-          <div class="question-category-badge">${escapeHtml(catLabel)}</div>
-          <div class="question-card">${escapeHtml(q.q)}</div>
-          <div class="options-grid">
-            ${q.shuffledOptions.map((opt, i) => `
-              <div class="option-card${opt === q.answer ? ' correct' : ''}">
-                <span class="option-label">${labels[i]}</span>
-                ${escapeHtml(opt)}
-              </div>
-            `).join('')}
-          </div>
-          <div class="reveal-area">
-            <div class="buzzed-team-display ${buzzedClass}">${escapeHtml(buzzedName)} buzzed in</div>
-            <div class="verdict-buttons">
-              <button id="correct-btn">&#10003; Correct</button>
-              <button id="wrong-btn">&#10007; Wrong</button>
-            </div>
+          <div class="team-answer-section">
+            ${renderTeamAnswerRow(0, false)}
+            ${renderTeamAnswerRow(1, false)}
           </div>
         </div>
       `;
@@ -1337,28 +1399,21 @@ body {
         ${renderHeader()}
         <div class="question-screen">
           <div class="second-chance-banner">
-            &#9889; ${escapeHtml(otherName)} gets a second chance!
+            &#9889; ${escapeHtml(flavorText)} &mdash; ${escapeHtml(otherName)} gets a chance!
           </div>
           <div class="question-category-badge">${escapeHtml(catLabel)}</div>
           <div class="question-card">${escapeHtml(q.q)}</div>
           <div class="options-grid">
             ${q.shuffledOptions.map((opt, i) => `
-              <div class="option-card${opt === q.answer ? ' correct' : ''}">
+              <div class="option-card${opt === q.answer ? ' correct' : ''}${i === state.wrongAnswerOption ? ' wrong-pick' : ''}">
                 <span class="option-label">${labels[i]}</span>
                 ${escapeHtml(opt)}
               </div>
             `).join('')}
           </div>
-          <div class="reveal-area">
-            <div class="flavor-text">${escapeHtml(flavorText)}</div>
-            <div class="buzz-area" style="margin-top:0; width:100%; pointer-events:none; opacity:0.4;">
-              <button class="buzz-btn" data-team="0" disabled>${escapeHtml(state.team1 || 'Team 1')} buzzed!</button>
-              <button class="buzz-btn" data-team="1" disabled>${escapeHtml(state.team2 || 'Team 2')} buzzed!</button>
-            </div>
-            <div class="verdict-buttons">
-              <button id="sc-correct-btn">&#10003; Correct (+1 for ${escapeHtml(otherName)})</button>
-              <button id="sc-wrong-btn">&#10007; Wrong (0 pts)</button>
-            </div>
+          <div class="team-answer-section">
+            ${renderTeamAnswerRow(state.buzzedTeam, true)}
+            ${renderTeamAnswerRow(otherTeam, false)}
           </div>
         </div>
       `;
@@ -1423,6 +1478,7 @@ body {
       state.currentQuestion = null;
       state.currentCategory = null;
       state.buzzedTeam = null;
+      state.wrongAnswerOption = null;
       state.usedQuestions = {};
       state.wrongFlavorIndex = 0;
       state.phase = 'category-board';
@@ -1436,7 +1492,8 @@ body {
       state.currentCategory = categoryId;
       state.currentQuestion = q;
       state.buzzedTeam = null;
-      state.phase = 'buzz';
+      state.wrongAnswerOption = null;
+      state.phase = 'question';
       render();
     }
 
@@ -1459,62 +1516,54 @@ body {
       };
     }
 
-    function handleBuzz(teamIndex) {
-      state.buzzedTeam = teamIndex;
-      state.phase = 'reveal';
+    function handleAnswer(teamIndex, optIndex) {
       sfxBuzz();
-      render();
-    }
-
-    function handleCorrect() {
-      const scoringTeam = state.buzzedTeam;
-      state.scores[scoringTeam]++;
-      sfxCorrect();
-      sfxPoint();
-      if (checkWin()) {
-        state.phase = 'win';
+      state.buzzedTeam = teamIndex;
+      const chosen = state.currentQuestion.shuffledOptions[optIndex];
+      const isCorrect = chosen === state.currentQuestion.answer;
+      if (isCorrect) {
+        state.scores[teamIndex]++;
+        sfxCorrect();
+        sfxPoint();
+        if (checkWin()) { state.phase = 'win'; render(); return; }
+        advancePickingTeam();
+        state.phase = 'category-board';
         render();
-        return;
+        const el = document.getElementById(`score-val-${teamIndex}`);
+        if (el) { void el.offsetWidth; el.classList.add('popping'); }
+        document.querySelector('.battlefield-bar')?.classList.add('battlefield-shimmer');
+        document.querySelector('.battlefield-right')?.classList.add('battlefield-shimmer');
+      } else {
+        sfxWrong();
+        state.wrongAnswerOption = optIndex;
+        state.phase = 'second-chance';
+        render();
+        state.wrongFlavorIndex++;
       }
-      advancePickingTeam();
-      state.phase = 'category-board';
-      render();
-      const el = document.getElementById(`score-val-${scoringTeam}`);
-      if (el) { void el.offsetWidth; el.classList.add('popping'); }
-      document.querySelector('.battlefield-bar')?.classList.add('battlefield-shimmer');
-      document.querySelector('.battlefield-right')?.classList.add('battlefield-shimmer');
     }
 
-    function handleWrong() {
-      sfxWrong();
-      state.phase = 'second-chance';
-      render();
-      state.wrongFlavorIndex++;
-    }
-
-    function handleSecondChanceCorrect() {
+    function handleSecondChanceAnswer(optIndex) {
+      sfxBuzz();
       const otherTeam = state.buzzedTeam === 0 ? 1 : 0;
-      state.scores[otherTeam]++;
-      sfxCorrect();
-      sfxPoint();
-      if (checkWin()) {
-        state.phase = 'win';
+      const chosen = state.currentQuestion.shuffledOptions[optIndex];
+      const isCorrect = chosen === state.currentQuestion.answer;
+      if (isCorrect) {
+        state.scores[otherTeam]++;
+        sfxCorrect();
+        sfxPoint();
+        if (checkWin()) { state.phase = 'win'; render(); return; }
+        state.pickingTeam = otherTeam;
+        state.phase = 'category-board';
         render();
-        return;
+        const el = document.getElementById(`score-val-${otherTeam}`);
+        if (el) { void el.offsetWidth; el.classList.add('popping'); }
+        document.querySelector('.battlefield-bar')?.classList.add('battlefield-shimmer');
+        document.querySelector('.battlefield-right')?.classList.add('battlefield-shimmer');
+      } else {
+        sfxWrong();
+        state.phase = 'category-board';
+        render();
       }
-      state.pickingTeam = otherTeam;
-      state.phase = 'category-board';
-      render();
-      const el = document.getElementById(`score-val-${otherTeam}`);
-      if (el) { void el.offsetWidth; el.classList.add('popping'); }
-      document.querySelector('.battlefield-bar')?.classList.add('battlefield-shimmer');
-      document.querySelector('.battlefield-right')?.classList.add('battlefield-shimmer');
-    }
-
-    function handleSecondChanceWrong() {
-      sfxWrong();
-      state.phase = 'category-board';
-      render();
     }
 
     function advancePickingTeam() {
@@ -1531,7 +1580,6 @@ body {
       app.innerHTML = `
         <div class="splash-screen">
           <div class="splash-question">Are you ready?</div>
-          <p class="splash-sub">betterquizthanmichael.com</p>
           <div class="splash-buttons">
             <button class="splash-yes" id="splash-yes">Yes</button>
             <button class="splash-no" id="splash-no">No</button>
@@ -1546,10 +1594,9 @@ body {
       app.innerHTML = `
         <div class="laser-screen">
           <img class="laser-img" src="laser-mike.JPG" alt="Laser Mike">
-          <div class="laser-overlay"></div>
         </div>
       `;
-      setTimeout(() => { state.phase = 'setup'; render(); }, 2500);
+      setTimeout(() => { state.phase = 'setup'; render(); }, 3100);
     }
 
     function render() {
@@ -1558,8 +1605,7 @@ body {
         case 'laser-reveal':   renderLaserMike();     break;
         case 'setup':          renderSetup();         break;
         case 'category-board': renderCategoryBoard(); break;
-        case 'buzz':           renderQuestion();      break;
-        case 'reveal':         renderReveal();        break;
+        case 'question':       renderQuestion();      break;
         case 'second-chance':  renderSecondChance();  break;
         case 'win':            renderWin();           break;
       }
@@ -1588,18 +1634,14 @@ body {
         });
       });
 
-      document.querySelectorAll('.buzz-btn').forEach(btn => {
+      document.querySelectorAll('.answer-btn:not([disabled])').forEach(btn => {
         btn.addEventListener('click', function() {
-          if (this.disabled) return;
-          handleBuzz(parseInt(this.dataset.team, 10));
+          const teamIndex = parseInt(this.dataset.team, 10);
+          const optIndex = parseInt(this.dataset.opt, 10);
+          if (state.phase === 'question') handleAnswer(teamIndex, optIndex);
+          else if (state.phase === 'second-chance') handleSecondChanceAnswer(optIndex);
         });
       });
-
-      document.getElementById('correct-btn')?.addEventListener('click', handleCorrect);
-      document.getElementById('wrong-btn')?.addEventListener('click', handleWrong);
-
-      document.getElementById('sc-correct-btn')?.addEventListener('click', handleSecondChanceCorrect);
-      document.getElementById('sc-wrong-btn')?.addEventListener('click', handleSecondChanceWrong);
 
       document.getElementById('play-again-btn')?.addEventListener('click', () => {
         state.phase = 'setup';

@@ -94,34 +94,92 @@ body.cool-mode #cool-mode-label {
   box-shadow: 0 0 8px rgba(0,229,255,0.9);
 }
 
-/* ── Boring mode overrides (default) ───────────────────────────────── */
+/* ── Boring mode (default — truly beige) ────────────────────────────── */
 body:not(.cool-mode) {
-  background: #1c1c1c !important;
+  background: #e8e8e4 !important;
   animation: none !important;
-  color: #ccc !important;
-  font-family: Arial, Helvetica, sans-serif !important;
+  color: #222 !important;
+  font-family: 'Times New Roman', Times, serif !important;
 }
 body:not(.cool-mode)::after { display: none !important; }
 body:not(.cool-mode) #starfield { display: none !important; }
 body:not(.cool-mode) .terminal-bg { display: none !important; }
 body:not(.cool-mode) .splash-nebula { display: none !important; }
-body:not(.cool-mode) * {
-  font-family: Arial, Helvetica, sans-serif !important;
+body:not(.cool-mode) *, body:not(.cool-mode) *::before, body:not(.cool-mode) *::after {
+  font-family: 'Times New Roman', Times, serif !important;
   text-shadow: none !important;
+  box-shadow: none !important;
   animation: none !important;
+  transition: none !important;
+  background-image: none !important;
+  filter: none !important;
 }
-body:not(.cool-mode) .setup-screen h1,
-body:not(.cool-mode) .score-value { font-family: Arial, Helvetica, sans-serif !important; }
-body:not(.cool-mode) .category-card:hover { box-shadow: none !important; transform: none !important; }
-body:not(.cool-mode) .splash-question { font-size: 3rem !important; color: #aaa !important; }
+body:not(.cool-mode) #app { background: #e8e8e4 !important; }
+body:not(.cool-mode) .splash-screen { background: #e8e8e4 !important; }
 body:not(.cool-mode) .splash-panel {
-  background: #2a2a2a !important;
-  border-color: #444 !important;
+  background: #d4d4cf !important;
+  border: 1px solid #aaa !important;
+  border-radius: 4px !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
-body:not(.cool-mode) .splash-yes,
-body:not(.cool-mode) .splash-no { box-shadow: none !important; }
+body:not(.cool-mode) .splash-panel img { mix-blend-mode: normal !important; filter: grayscale(1) brightness(0.4) !important; }
+body:not(.cool-mode) .splash-question { font-size: 1.8rem !important; color: #444 !important; font-weight: normal !important; }
+body:not(.cool-mode) .splash-yes {
+  background: #b0b0aa !important; color: #222 !important;
+  border: 1px solid #888 !important; border-radius: 3px !important; padding: 0.4rem 1.2rem !important;
+}
+body:not(.cool-mode) .splash-no {
+  background: #c8c8c2 !important; color: #444 !important;
+  border: 1px solid #999 !important; border-radius: 3px !important; padding: 0.4rem 1.2rem !important;
+}
+body:not(.cool-mode) .scoreboard { background: #d4d4cf !important; border-bottom: 1px solid #aaa !important; }
+body:not(.cool-mode) .score-name, body:not(.cool-mode) .score-value { color: #333 !important; }
+body:not(.cool-mode) .battlefield-bar, body:not(.cool-mode) .battlefield-left,
+body:not(.cool-mode) .battlefield-right { background: #bbb !important; border-radius: 0 !important; }
+body:not(.cool-mode) .setup-screen { background: #e8e8e4 !important; }
+body:not(.cool-mode) .setup-screen h1 { color: #333 !important; font-size: 1.4rem !important; font-weight: normal !important; }
+body:not(.cool-mode) .diff-card, body:not(.cool-mode) .category-card,
+body:not(.cool-mode) .question-card, body:not(.cool-mode) .option-card {
+  background: #d4d4cf !important; border: 1px solid #aaa !important;
+  border-radius: 3px !important; color: #222 !important;
+}
+body:not(.cool-mode) .category-card:hover { background: #c8c8c2 !important; transform: none !important; }
+body:not(.cool-mode) .answer-btn { background: #ccc !important; border: 1px solid #999 !important; color: #333 !important; border-radius: 3px !important; }
+body:not(.cool-mode) .lock-in-btn, body:not(.cool-mode) .continue-btn, body:not(.cool-mode) .play-again-btn {
+  background: #b0b0aa !important; color: #222 !important;
+  border: 1px solid #888 !important; border-radius: 3px !important;
+}
+body:not(.cool-mode) .win-screen { background: #e8e8e4 !important; }
+body:not(.cool-mode) .win-winner-name { color: #333 !important; font-size: 2rem !important; }
+body:not(.cool-mode) .confetti-piece { display: none !important; }
+body:not(.cool-mode) #cool-mode-wrap { background: #d4d4cf; border: 1px solid #aaa; border-radius: 3px; padding: 4px 8px; }
+
+/* ── Cool mode boosters ──────────────────────────────────────────────── */
+body.cool-mode .category-card {
+  animation: neonBorderPulse 3s ease infinite !important;
+}
+body.cool-mode .score-value {
+  filter: drop-shadow(0 0 12px currentColor) !important;
+}
+body.cool-mode .battlefield-left {
+  box-shadow: 4px 0 18px rgba(0,229,255,0.6) !important;
+}
+body.cool-mode .battlefield-right {
+  box-shadow: -4px 0 18px rgba(255,45,120,0.6) !important;
+}
+body.cool-mode .question-card {
+  box-shadow: 0 0 40px rgba(0,229,255,0.12), inset 0 0 30px rgba(0,229,255,0.04) !important;
+}
+body.cool-mode .answer-btn.selected {
+  box-shadow: 0 0 20px currentColor !important;
+}
+body.cool-mode .lock-in-btn:not(:disabled) {
+  animation: playAgainPulse 1.5s ease infinite !important;
+}
+body.cool-mode .win-winner-name {
+  filter: drop-shadow(0 0 30px currentColor) drop-shadow(0 0 60px currentColor) !important;
+}
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(16px); }
@@ -129,9 +187,20 @@ body:not(.cool-mode) .splash-no { box-shadow: none !important; }
 }
 
 @keyframes nebulaDrift1 {
-  0%,100% { transform: scale(1)   translate(0%,   0%); opacity: 0.18; }
-  33%     { transform: scale(1.2) translate(4%,  -5%); opacity: 0.28; }
-  66%     { transform: scale(0.9) translate(-3%,  4%); opacity: 0.14; }
+  0%,100% { transform: scale(1)   translate(0%,   0%); opacity: 0.22; }
+  33%     { transform: scale(1.25) translate(4%,  -5%); opacity: 0.38; }
+  66%     { transform: scale(0.9) translate(-3%,  4%); opacity: 0.16; }
+}
+@keyframes crtFlicker {
+  0%,100% { opacity: 1; }
+  92%     { opacity: 1; }
+  93%     { opacity: 0.92; }
+  94%     { opacity: 1; }
+  97%     { opacity: 0.95; }
+  98%     { opacity: 1; }
+}
+body.cool-mode #app {
+  animation: crtFlicker 8s steps(1) infinite;
 }
 @keyframes nebulaDrift2 {
   0%,100% { transform: scale(1.1) translate(0%,   0%); opacity: 0.15; }
@@ -1447,11 +1516,11 @@ body::after {
 
     // ─── Music player ─────────────────────────────────────────────────────────
     const MUSIC_TRACKS = {
-      splash:   'music/' + encodeURIComponent('A Seventh of Beethoveen.mp3'),
-      setup:    'music/' + encodeURIComponent('Kakariko Metro 1983 (Cover).mp3'),
-      board:    'music/' + encodeURIComponent('A Sixth of Beethoven.mp3'),
-      question: 'music/' + encodeURIComponent("Holdin' (Cisco is that you_).mp3"),
-      win:      'music/' + encodeURIComponent('vibe code ya life my dude.mp3'),
+      splash:   'music/splash.mp3',
+      setup:    'music/setup.mp3',
+      board:    'music/board.mp3',
+      question: 'music/question.mp3',
+      win:      'music/win.mp3',
     };
     const MUSIC_VOL = 0.7;
     const FADE_IN  = 1.5; // seconds

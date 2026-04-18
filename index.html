@@ -203,7 +203,7 @@ body::after {
   inset: 0;
   overflow: hidden;
   pointer-events: none;
-  opacity: 0.09;
+  opacity: 0.045;
   z-index: 0;
   font-family: 'Share Tech Mono', 'Courier New', monospace;
   font-size: 0.68rem;
@@ -211,8 +211,8 @@ body::after {
   line-height: 1.9;
   padding: 1rem 2rem;
   white-space: pre;
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%);
-  mask-image: linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
 }
 .terminal-scroll {
   animation: terminalScroll 28s linear infinite;
@@ -869,6 +869,20 @@ body::after {
   text-align: center;
   padding: 2rem;
 }
+.splash-panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  background: rgba(5,5,20,0.75);
+  border: 1px solid rgba(0,229,255,0.12);
+  border-radius: 1.5rem;
+  padding: 3rem 4rem;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
 .splash-question {
   font-size: 4rem;
   font-weight: bold;
@@ -1037,11 +1051,6 @@ body::after {
   </style>
 </head>
 <body>
-  <audio id="bg-music" loop>
-    <source src="https://assets.mixkit.co/music/preview/mixkit-game-level-music-689.mp3" type="audio/mpeg">
-    <source src="https://assets.mixkit.co/music/preview/mixkit-halo-688.mp3" type="audio/mpeg">
-    <source src="https://assets.mixkit.co/music/preview/mixkit-games-worldbeat-466.mp3" type="audio/mpeg">
-  </audio>
   <div id="app"></div>
   <script>
     // ─── 1. QUESTION_BANK ──────────────────────────────────────────────────────
@@ -1318,22 +1327,64 @@ body::after {
       [262, 330, 392, 523, 659, 784, 988, 1175].forEach((f, i) => playTone(f, 0.18, 'sine', 0.38, i * 0.09));
     }
 
-    let bgMusic = null;
+    let bgMusicNodes = null;
+    let arpTimer = null;
+
     function initBgMusic() {
-      if (bgMusic) return;
-      bgMusic = document.getElementById('bg-music');
-      if (bgMusic) {
-        bgMusic.volume = 0.2;
-        bgMusic.play().catch(e => console.warn('BG music blocked:', e));
-        bgMusic.addEventListener('error', () => console.warn('BG music load error'));
+      if (bgMusicNodes) return;
+      const ctx = getAudioCtx();
+      if (!ctx) return;
+      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+
+      const master = ctx.createGain();
+      master.gain.value = state.muted ? 0 : 0.08;
+      master.connect(ctx.destination);
+      bgMusicNodes = { master };
+
+      // Space pad drone: 4 detuned oscillators through a slowly sweeping filter
+      [[55,'sawtooth',0.28],[110,'sawtooth',0.2],[165,'sine',0.12],[220,'sine',0.08]].forEach(([freq,type,vol],i) => {
+        const osc = ctx.createOscillator();
+        osc.type = type;
+        osc.frequency.value = freq * (1 + (i % 2 ? 0.003 : -0.002));
+        const filt = ctx.createBiquadFilter();
+        filt.type = 'lowpass';
+        filt.frequency.setValueAtTime(400, ctx.currentTime);
+        filt.frequency.linearRampToValueAtTime(1100, ctx.currentTime + 14);
+        filt.frequency.linearRampToValueAtTime(400, ctx.currentTime + 30);
+        const gain = ctx.createGain();
+        gain.gain.value = vol;
+        osc.connect(filt); filt.connect(gain); gain.connect(master);
+        osc.start();
+      });
+
+      // Slow arpeggio in A minor: A3 C4 D4 E4 G4 and back
+      const notes = [220, 261.6, 293.7, 329.6, 392, 329.6, 293.7, 261.6];
+      const step = 0.45;
+      const loopLen = notes.length * step;
+
+      function scheduleArp(t) {
+        notes.forEach((freq, i) => {
+          const at = t + i * step;
+          const osc = ctx.createOscillator();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          const g = ctx.createGain();
+          g.gain.setValueAtTime(0, at);
+          g.gain.linearRampToValueAtTime(0.14, at + 0.04);
+          g.gain.exponentialRampToValueAtTime(0.001, at + 0.38);
+          osc.connect(g); g.connect(master);
+          osc.start(at);
+          osc.stop(at + 0.42);
+          osc.onended = () => { osc.disconnect(); g.disconnect(); };
+        });
+        arpTimer = setTimeout(() => scheduleArp(t + loopLen), (loopLen - 0.8) * 1000);
       }
+      scheduleArp(ctx.currentTime + 0.3);
     }
+
     function toggleMute() {
       state.muted = !state.muted;
-      if (audioCtx && audioCtx.state !== 'closed') {
-        (state.muted ? audioCtx.suspend() : audioCtx.resume()).catch(() => {});
-      }
-      if (bgMusic) bgMusic.muted = state.muted;
+      if (bgMusicNodes) bgMusicNodes.master.gain.value = state.muted ? 0 : 0.08;
       const btn = document.getElementById('mute-btn');
       if (btn) btn.textContent = state.muted ? '\uD83D\uDD07' : '\uD83D\uDD0A';
     }
@@ -1768,11 +1819,13 @@ body::after {
       app.innerHTML = `
         <div class="splash-screen">
           ${terminalBgHtml()}
-          <img src="sbt-logo.png" alt="Space Bible Trivia" style="position:relative;z-index:1;max-height:220px;max-width:80vw;object-fit:contain;margin-bottom:1.5rem;mix-blend-mode:screen;">
-          <div class="splash-question" style="position:relative;z-index:1;">Are you ready?</div>
-          <div class="splash-buttons" style="position:relative;z-index:1;">
-            <button class="splash-yes" id="splash-yes">Yes</button>
-            <button class="splash-no" id="splash-no">No</button>
+          <div class="splash-panel">
+            <img src="sbt-logo.png" alt="Space Bible Trivia" style="max-height:200px;max-width:75vw;object-fit:contain;mix-blend-mode:screen;">
+            <div class="splash-question">Are you ready?</div>
+            <div class="splash-buttons">
+              <button class="splash-yes" id="splash-yes">Yes</button>
+              <button class="splash-no" id="splash-no">No</button>
+            </div>
           </div>
         </div>
       `;

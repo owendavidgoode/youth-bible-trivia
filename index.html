@@ -1363,16 +1363,10 @@ body {
     }
 
     function handleCorrect() {
-      state.scores[state.buzzedTeam]++;
+      const scoringTeam = state.buzzedTeam;
+      state.scores[scoringTeam]++;
+      sfxCorrect();
       sfxPoint();
-      setTimeout(() => {
-        const el = document.getElementById(`score-val-${state.buzzedTeam}`);
-        if (el) { el.classList.remove('popping'); void el.offsetWidth; el.classList.add('popping'); }
-      }, 50);
-      setTimeout(() => {
-        document.querySelector('.battlefield-bar')?.classList.add('battlefield-shimmer');
-        document.querySelector('.battlefield-right')?.classList.add('battlefield-shimmer');
-      }, 50);
       if (checkWin()) {
         state.phase = 'win';
         render();
@@ -1381,23 +1375,24 @@ body {
       advancePickingTeam();
       state.phase = 'category-board';
       render();
+      const el = document.getElementById(`score-val-${scoringTeam}`);
+      if (el) { void el.offsetWidth; el.classList.add('popping'); }
+      document.querySelector('.battlefield-bar')?.classList.add('battlefield-shimmer');
+      document.querySelector('.battlefield-right')?.classList.add('battlefield-shimmer');
     }
 
     function handleWrong() {
       sfxWrong();
-      state.wrongFlavorIndex++;
       state.phase = 'second-chance';
       render();
+      state.wrongFlavorIndex++;
     }
 
     function handleSecondChanceCorrect() {
       const otherTeam = state.buzzedTeam === 0 ? 1 : 0;
       state.scores[otherTeam]++;
+      sfxCorrect();
       sfxPoint();
-      setTimeout(() => {
-        const el = document.getElementById(`score-val-${otherTeam}`);
-        if (el) { el.classList.remove('popping'); void el.offsetWidth; el.classList.add('popping'); }
-      }, 50);
       if (checkWin()) {
         state.phase = 'win';
         render();
@@ -1406,6 +1401,10 @@ body {
       state.pickingTeam = otherTeam;
       state.phase = 'category-board';
       render();
+      const el = document.getElementById(`score-val-${otherTeam}`);
+      if (el) { void el.offsetWidth; el.classList.add('popping'); }
+      document.querySelector('.battlefield-bar')?.classList.add('battlefield-shimmer');
+      document.querySelector('.battlefield-right')?.classList.add('battlefield-shimmer');
     }
 
     function handleSecondChanceWrong() {
@@ -1420,12 +1419,6 @@ body {
 
     function checkWin() {
       return state.scores[0] >= WIN_SCORE || state.scores[1] >= WIN_SCORE;
-    }
-
-    function getNextWrongFlavor() {
-      const flavor = WRONG_FLAVORS[state.wrongFlavorIndex % WRONG_FLAVORS.length];
-      state.wrongFlavorIndex++;
-      return flavor;
     }
 
     // ─── 11. render() dispatch + bindEvents() ─────────────────────────────────

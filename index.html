@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bible Trivia</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #0d0d1a;
+      --surface: #1a1a2e;
+      --text: #f0f0f0;
+      --muted: #8888aa;
+      --team1: #3b82f6;
+      --team2: #ef4444;
+      --correct: #22c55e;
+      --wrong: #ef4444;
+      --option: #252540;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Georgia', serif;
+      font-size: 1.125rem;
+      line-height: 1.6;
+    }
+
+    #app {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Setup Screen */
+    .setup-screen {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 2rem;
+      padding: 2rem;
+    }
+
+    .setup-screen h1 {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .setup-screen .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .setup-screen label {
+      font-size: 1.25rem;
+      color: var(--muted);
+    }
+
+    .setup-screen input {
+      width: 300px;
+      padding: 0.75rem;
+      font-size: 1.125rem;
+      background-color: var(--surface);
+      color: var(--text);
+      border: 2px solid var(--muted);
+      border-radius: 0.5rem;
+      font-family: 'Georgia', serif;
+    }
+
+    .setup-screen input::placeholder {
+      color: var(--muted);
+    }
+
+    .setup-screen button {
+      padding: 1rem 2rem;
+      font-size: 1.25rem;
+      background-color: var(--team1);
+      color: white;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      font-weight: bold;
+      transition: opacity 0.3s;
+    }
+
+    .setup-screen button:hover {
+      opacity: 0.8;
+    }
+
+    /* Scoreboard */
+    .scoreboard {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem;
+      background-color: var(--surface);
+      border-bottom: 2px solid var(--muted);
+      gap: 2rem;
+    }
+
+    .score-team1, .score-team2 {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      flex: 1;
+    }
+
+    .score-team1 {
+      color: var(--team1);
+    }
+
+    .score-team2 {
+      color: var(--team2);
+    }
+
+    .score-label {
+      font-size: 0.875rem;
+      color: var(--muted);
+    }
+
+    .score-team1, .score-team2 {
+      font-size: 2rem;
+      font-weight: bold;
+    }
+
+    .scoreboard-center {
+      flex: 1;
+      text-align: center;
+      font-size: 1rem;
+      color: var(--muted);
+    }
+
+    /* Question Screen */
+    .question-screen {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      padding: 2rem;
+      gap: 2rem;
+      overflow-y: auto;
+    }
+
+    .question-text {
+      font-size: 2rem;
+      text-align: center;
+      flex-grow: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .option-btn {
+      padding: 1.5rem;
+      background-color: var(--option);
+      color: var(--text);
+      border: 2px solid var(--muted);
+      border-radius: 0.5rem;
+      font-size: 1.25rem;
+      text-align: left;
+      font-family: 'Georgia', serif;
+      min-height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      cursor: default;
+    }
+
+    .option-btn.correct {
+      background-color: rgba(34, 197, 94, 0.2);
+      border-color: var(--correct);
+      color: var(--correct);
+    }
+
+    .option-label {
+      display: inline-block;
+      width: 2rem;
+      font-weight: bold;
+      margin-right: 1rem;
+    }
+
+    /* Buzz Area */
+    .buzz-area {
+      display: flex;
+      gap: 1.5rem;
+      margin-top: auto;
+    }
+
+    .buzz-btn {
+      flex: 1;
+      padding: 1.5rem;
+      font-size: 1.5rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: opacity 0.3s;
+      color: white;
+      font-family: 'Georgia', serif;
+    }
+
+    .buzz-btn[data-team="0"] {
+      background-color: var(--team1);
+    }
+
+    .buzz-btn[data-team="1"] {
+      background-color: var(--team2);
+    }
+
+    .buzz-btn:hover {
+      opacity: 0.8;
+    }
+
+    /* Reveal Area */
+    .reveal-area {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: auto;
+      align-items: center;
+    }
+
+    .buzzed-team-display {
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+    }
+
+    .buzzed-team-display.team1 {
+      color: var(--team1);
+    }
+
+    .buzzed-team-display.team2 {
+      color: var(--team2);
+    }
+
+    .verdict-buttons {
+      display: flex;
+      gap: 1rem;
+      width: 100%;
+    }
+
+    .verdict-buttons button {
+      flex: 1;
+      padding: 1rem;
+      font-size: 1.25rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: opacity 0.3s;
+      color: white;
+      font-family: 'Georgia', serif;
+    }
+
+    #correct-btn {
+      background-color: var(--correct);
+    }
+
+    #wrong-btn {
+      background-color: var(--wrong);
+    }
+
+    .verdict-buttons button:hover {
+      opacity: 0.8;
+    }
+
+    /* End Screen */
+    .end-screen {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 2rem;
+      padding: 2rem;
+    }
+
+    .end-screen h2 {
+      font-size: 2rem;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    .winner-name {
+      font-size: 3rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+    }
+
+    .winner-name.team1 {
+      color: var(--team1);
+    }
+
+    .winner-name.team2 {
+      color: var(--team2);
+    }
+
+    .final-scores {
+      display: flex;
+      gap: 3rem;
+      margin-bottom: 2rem;
+      font-size: 1.5rem;
+    }
+
+    .final-score-team {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .final-score-team.team1 {
+      color: var(--team1);
+    }
+
+    .final-score-team.team2 {
+      color: var(--team2);
+    }
+
+    .final-score-value {
+      font-size: 2.5rem;
+      font-weight: bold;
+    }
+
+    #play-again-btn {
+      padding: 1rem 2rem;
+      font-size: 1.25rem;
+      background-color: var(--team1);
+      color: white;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      font-weight: bold;
+      transition: opacity 0.3s;
+      font-family: 'Georgia', serif;
+    }
+
+    #play-again-btn:hover {
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    const QUESTIONS = [
+      { q: "Which book of the Bible does NOT contain the word 'God'?", options: ["Ruth", "Esther", "Song of Solomon", "Philemon"], answer: "Esther" },
+      { q: "How many fish did the disciples catch in the miraculous catch recorded in John 21?", options: ["72", "120", "153", "276"], answer: "153" },
+      { q: "Who was the father of Methuselah, the oldest person in the Bible?", options: ["Seth", "Lamech", "Enoch", "Noah"], answer: "Enoch" },
+      { q: "For how many pieces of silver was Joseph sold to the Ishmaelites by his brothers?", options: ["15", "20", "30", "50"], answer: "20" },
+      { q: "In what valley did David kill Goliath?", options: ["Valley of Jezreel", "Valley of Elah", "Valley of Hinnom", "Valley of Kidron"], answer: "Valley of Elah" },
+      { q: "How many years did it take Solomon to build the Temple in Jerusalem?", options: ["3", "5", "7", "12"], answer: "7" },
+      { q: "Who was the first person to see the risen Jesus according to John's Gospel?", options: ["Peter", "John", "Mary the mother of Jesus", "Mary Magdalene"], answer: "Mary Magdalene" },
+      { q: "How many days was Lazarus in the tomb before Jesus raised him?", options: ["1", "2", "3", "4"], answer: "4" },
+      { q: "What was the occupation of Zacchaeus, who climbed a tree to see Jesus?", options: ["Fisherman", "Carpenter", "Chief tax collector", "Tent-maker"], answer: "Chief tax collector" },
+      { q: "On which island was the Apostle John when he received the visions recorded in Revelation?", options: ["Cyprus", "Crete", "Patmos", "Malta"], answer: "Patmos" }
+    ];
+
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    const state = {
+      phase: 'setup',
+      team1: '',
+      team2: '',
+      scores: [0, 0],
+      questionIndex: 0,
+      shuffledOptions: [],
+      buzzedTeam: null,
+    };
+
+    function render() {
+      const app = document.getElementById('app');
+      switch (state.phase) {
+        case 'setup':
+          app.innerHTML = renderSetup();
+          break;
+        case 'buzz':
+          app.innerHTML = renderQuestion();
+          break;
+        case 'reveal':
+          app.innerHTML = renderReveal();
+          break;
+        case 'end':
+          app.innerHTML = renderEnd();
+          break;
+      }
+      bindEvents();
+    }
+
+    function renderScoreboard() {
+      return `
+        <div class="scoreboard">
+          <div class="score-team1">
+            <div class="score-label">${state.team1}</div>
+            <div>${state.scores[0]}</div>
+          </div>
+          <div class="scoreboard-center">Question ${state.questionIndex + 1} of ${QUESTIONS.length}</div>
+          <div class="score-team2">
+            <div class="score-label">${state.team2}</div>
+            <div>${state.scores[1]}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderSetup() {
+      return `
+        <div class="setup-screen">
+          <h1>Bible Trivia</h1>
+          <div class="form-group">
+            <label for="team1-input">Team 1 Name</label>
+            <input id="team1-input" type="text" placeholder="Team 1" maxlength="20">
+          </div>
+          <div class="form-group">
+            <label for="team2-input">Team 2 Name</label>
+            <input id="team2-input" type="text" placeholder="Team 2" maxlength="20">
+          </div>
+          <button id="start-btn">Start Game</button>
+        </div>
+      `;
+    }
+
+    function renderQuestion() {
+      const question = QUESTIONS[state.questionIndex];
+      const currentOptions = state.shuffledOptions[state.questionIndex];
+      const labels = ['A', 'B', 'C', 'D'];
+
+      return `
+        ${renderScoreboard()}
+        <div class="question-screen">
+          <div class="question-text">${question.q}</div>
+          <div class="options-grid">
+            ${currentOptions.map((option, idx) => `
+              <div class="option-btn">
+                <span class="option-label">${labels[idx]}</span>${option}
+              </div>
+            `).join('')}
+          </div>
+          <div class="buzz-area">
+            <button class="buzz-btn" data-team="0">${state.team1} buzzed!</button>
+            <button class="buzz-btn" data-team="1">${state.team2} buzzed!</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderReveal() {
+      const question = QUESTIONS[state.questionIndex];
+      const currentOptions = state.shuffledOptions[state.questionIndex];
+      const labels = ['A', 'B', 'C', 'D'];
+      const correctAnswerIndex = currentOptions.indexOf(question.answer);
+      const buzzedTeamName = state.buzzedTeam === 0 ? state.team1 : state.team2;
+      const buzzedTeamClass = state.buzzedTeam === 0 ? 'team1' : 'team2';
+
+      return `
+        ${renderScoreboard()}
+        <div class="question-screen">
+          <div class="question-text">${question.q}</div>
+          <div class="options-grid">
+            ${currentOptions.map((option, idx) => `
+              <div class="option-btn ${idx === correctAnswerIndex ? 'correct' : ''}">
+                <span class="option-label">${labels[idx]}</span>${option}
+              </div>
+            `).join('')}
+          </div>
+          <div class="reveal-area">
+            <div class="buzzed-team-display ${buzzedTeamClass}">${buzzedTeamName}</div>
+            <div class="verdict-buttons">
+              <button id="correct-btn">Correct</button>
+              <button id="wrong-btn">Wrong</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderEnd() {
+      const winner = state.scores[0] > state.scores[1] ? state.team1 : state.scores[1] > state.scores[0] ? state.team2 : null;
+      const winnerClass = state.scores[0] > state.scores[1] ? 'team1' : state.scores[1] > state.scores[0] ? 'team2' : null;
+
+      return `
+        <div class="end-screen">
+          <h2>Game Over</h2>
+          <div class="winner-name ${winnerClass}">
+            ${winner ? `${winner} wins!` : "It's a tie!"}
+          </div>
+          <div class="final-scores">
+            <div class="final-score-team team1">
+              <div>${state.team1}</div>
+              <div class="final-score-value">${state.scores[0]}</div>
+            </div>
+            <div class="final-score-team team2">
+              <div>${state.team2}</div>
+              <div class="final-score-value">${state.scores[1]}</div>
+            </div>
+          </div>
+          <button id="play-again-btn">Play Again</button>
+        </div>
+      `;
+    }
+
+    function startGame() {
+      const team1Input = document.getElementById('team1-input').value.trim() || 'Team 1';
+      const team2Input = document.getElementById('team2-input').value.trim() || 'Team 2';
+
+      state.team1 = team1Input;
+      state.team2 = team2Input;
+      state.scores = [0, 0];
+      state.questionIndex = 0;
+      state.shuffledOptions = QUESTIONS.map(q => shuffle(q.options));
+      state.buzzedTeam = null;
+      state.phase = 'buzz';
+
+      render();
+    }
+
+    function advanceQuestion() {
+      if (state.questionIndex < QUESTIONS.length - 1) {
+        state.questionIndex++;
+        state.buzzedTeam = null;
+        state.phase = 'buzz';
+      } else {
+        state.phase = 'end';
+      }
+      render();
+    }
+
+    function bindEvents() {
+      document.getElementById('start-btn')?.addEventListener('click', startGame);
+
+      document.querySelectorAll('.buzz-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          state.buzzedTeam = parseInt(this.dataset.team, 10);
+          state.phase = 'reveal';
+          render();
+        });
+      });
+
+      document.getElementById('correct-btn')?.addEventListener('click', function() {
+        state.scores[state.buzzedTeam]++;
+        advanceQuestion();
+      });
+
+      document.getElementById('wrong-btn')?.addEventListener('click', advanceQuestion);
+
+      document.getElementById('play-again-btn')?.addEventListener('click', function() {
+        state.phase = 'setup';
+        render();
+      });
+    }
+
+    render();
+  </script>
+</body>
+</html>

@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Space Bible Trivia | Bridgepoint Bible Church</title>
   <style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@700;900&display=swap');
+
 *, *::before, *::after {
   margin: 0;
   padding: 0;
@@ -36,15 +38,6 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  15%       { transform: translateX(-8px); }
-  30%       { transform: translateX(8px); }
-  45%       { transform: translateX(-6px); }
-  60%       { transform: translateX(6px); }
-  75%       { transform: translateX(-3px); }
-  90%       { transform: translateX(3px); }
-}
 
 @keyframes scorePop {
   0%   { transform: scale(1); }
@@ -79,15 +72,63 @@
   50%       { box-shadow: 0 0 32px var(--gold), 0 0 64px rgba(245,158,11,0.6); }
 }
 
+@keyframes titleGlow {
+  0%, 100% { text-shadow: 0 0 30px rgba(0,229,255,0.8), 0 0 60px rgba(0,229,255,0.35), 0 0 100px rgba(255,45,120,0.2), 0 2px 8px rgba(0,0,0,0.9); }
+  50%       { text-shadow: 0 0 50px rgba(0,229,255,1), 0 0 100px rgba(0,229,255,0.55), 0 0 180px rgba(255,45,120,0.35), 0 2px 8px rgba(0,0,0,0.9); }
+}
+
+@keyframes neonBorderPulse {
+  0%, 100% { box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 12px rgba(0,229,255,0.3); border-color: rgba(0,229,255,0.5); }
+  50%       { box-shadow: 0 12px 36px rgba(0,0,0,0.6), 0 0 28px rgba(0,229,255,0.7), 0 0 56px rgba(0,229,255,0.25); border-color: var(--team1); }
+}
+
 body {
-  background: linear-gradient(135deg, var(--bg-from) 0%, #0a0028 35%, #000f1a 65%, var(--bg-to) 100%);
-  background-size: 400% 400%;
+  background:
+    radial-gradient(ellipse 45% 35% at 12% 22%, rgba(0,229,255,0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 55% 40% at 85% 68%, rgba(255,45,120,0.06) 0%, transparent 70%),
+    radial-gradient(ellipse 35% 28% at 58% 85%, rgba(120,0,220,0.06) 0%, transparent 70%),
+    linear-gradient(135deg, var(--bg-from) 0%, #0a0028 35%, #000f1a 65%, var(--bg-to) 100%);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 400% 400%;
   animation: bgPulse 18s ease infinite;
   color: var(--text);
-  font-family: 'Georgia', serif;
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
   font-size: 1.125rem;
   line-height: 1.6;
   min-height: 100vh;
+}
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 3px,
+    rgba(0,0,0,0.06) 3px,
+    rgba(0,0,0,0.06) 4px
+  );
+  pointer-events: none;
+  z-index: 8000;
+}
+
+#starfield {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.star {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  background: white;
+  border-radius: 50%;
+  animation: starTwinkle var(--dur, 5s) var(--del, 0s) ease-in-out infinite;
+}
+@keyframes starTwinkle {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50%       { opacity: 0.06; transform: scale(0.4); }
 }
 
 #app {
@@ -95,6 +136,8 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  position: relative;
+  z-index: 1;
   animation: fadeIn 0.4s ease both;
 }
 
@@ -149,7 +192,41 @@ body {
   gap: 2rem;
   padding: 3rem 2rem;
   flex: 1;
+  position: relative;
+  overflow: hidden;
   animation: fadeIn 0.5s ease both;
+}
+
+/* ─── Terminal Background ─────────────────────── */
+.terminal-bg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: 0.07;
+  z-index: 0;
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
+  font-size: 0.68rem;
+  color: var(--team1);
+  line-height: 1.9;
+  padding: 1rem 2rem;
+  white-space: pre;
+}
+.terminal-scroll {
+  animation: terminalScroll 28s linear infinite;
+}
+@keyframes terminalScroll {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(-50%); }
+}
+.setup-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  width: 100%;
 }
 
 .setup-logo-row {
@@ -160,11 +237,13 @@ body {
 }
 
 .setup-screen h1 {
-  font-size: 3.5rem;
-  letter-spacing: 0.04em;
-  text-shadow: 0 0 30px rgba(0,229,255,0.8), 0 0 60px rgba(0,229,255,0.35), 0 0 100px rgba(255,45,120,0.2), 0 2px 8px rgba(0,0,0,0.9);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 3.2rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
   text-align: center;
   cursor: default;
+  animation: titleGlow 3s ease infinite;
 }
 .setup-screen h1:hover::after {
   content: attr(data-tooltip);
@@ -255,7 +334,7 @@ body {
   color: var(--text);
   border: 2px solid var(--surface-border);
   border-radius: 0.6rem;
-  font-family: 'Georgia', serif;
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
   transition: border-color 0.2s;
   backdrop-filter: blur(4px);
 }
@@ -271,7 +350,7 @@ body {
   padding: 1rem 2.5rem;
   font-size: 1.3rem;
   font-weight: bold;
-  font-family: 'Georgia', serif;
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
   background: linear-gradient(135deg, #007a8a, #00b8d4, #00e5ff);
   color: #000c10;
   border: none;
@@ -324,10 +403,11 @@ body {
   opacity: 0.8;
 }
 .score-value {
+  font-family: 'Orbitron', sans-serif;
   font-size: 3.5rem;
-  font-weight: bold;
+  font-weight: 700;
   line-height: 1;
-  filter: drop-shadow(0 0 8px currentColor);
+  filter: drop-shadow(0 0 10px currentColor) drop-shadow(0 0 24px currentColor);
 }
 .score-value.popping {
   animation: scorePop 0.5s ease both;
@@ -439,8 +519,7 @@ body {
 }
 .category-card:hover:not(.exhausted) {
   transform: translateY(-4px);
-  border-color: rgba(255,255,255,0.35);
-  box-shadow: 0 12px 32px rgba(0,0,0,0.6), 0 0 16px rgba(255,255,255,0.1);
+  animation: neonBorderPulse 1.4s ease infinite;
 }
 .category-card.exhausted {
   opacity: 0.38;
@@ -556,7 +635,7 @@ body {
   padding: 1rem 3rem;
   font-size: 1.4rem;
   font-weight: bold;
-  font-family: 'Georgia', serif;
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
   background: linear-gradient(135deg, #7a5500, #ffe200);
   color: #1a1000;
   border: none;
@@ -697,7 +776,7 @@ body {
   align-items: center;
   justify-content: center;
   background: rgba(0,0,8,0.97);
-  z-index: 200;
+  z-index: 1100;
   gap: 1.5rem;
   padding: 2rem;
   text-align: center;
@@ -710,6 +789,8 @@ body {
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.15em;
+  position: relative;
+  z-index: 1;
 }
 
 .win-winner-name {
@@ -717,6 +798,8 @@ body {
   font-weight: bold;
   line-height: 1.1;
   animation: winGlow 2s ease infinite;
+  position: relative;
+  z-index: 1;
 }
 .win-winner-name.team1 { color: var(--team1); }
 .win-winner-name.team2 { color: var(--team2); }
@@ -726,12 +809,16 @@ body {
   font-style: italic;
   font-size: 1.1rem;
   opacity: 0.9;
+  position: relative;
+  z-index: 1;
 }
 
 .win-scores {
   display: flex;
   gap: 3rem;
   font-size: 1.5rem;
+  position: relative;
+  z-index: 1;
 }
 .win-score-block {
   display: flex;
@@ -751,7 +838,7 @@ body {
   padding: 1rem 2.5rem;
   font-size: 1.3rem;
   font-weight: bold;
-  font-family: 'Georgia', serif;
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
   background: linear-gradient(135deg, #d97706, #f59e0b);
   color: #1a1000;
   border: none;
@@ -800,7 +887,7 @@ body {
   padding: 1.1rem 3rem;
   font-size: 1.5rem;
   font-weight: bold;
-  font-family: 'Georgia', serif;
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
   background: linear-gradient(135deg, #004a55, #00b8d4, #00e5ff);
   color: #001820;
   border: none;
@@ -818,7 +905,7 @@ body {
   padding: 1.1rem 3rem;
   font-size: 1.5rem;
   font-weight: bold;
-  font-family: 'Georgia', serif;
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
   background: var(--surface);
   color: var(--muted);
   border: 2px solid var(--surface-border);
@@ -898,7 +985,7 @@ body {
   padding: 0.85rem 0;
   font-size: 1.2rem;
   font-weight: bold;
-  font-family: 'Georgia', serif;
+  font-family: 'Share Tech Mono', 'Courier New', monospace;
   border-radius: 0.6rem;
   cursor: pointer;
   transition: transform 0.1s, box-shadow 0.15s, border-color 0.15s;
@@ -943,7 +1030,7 @@ body {
   border-radius: 2px;
   animation: confettiFall linear infinite;
   pointer-events: none;
-  z-index: 201;
+  z-index: 0;
 }
   </style>
 </head>
@@ -1012,7 +1099,7 @@ body {
           { q: "The textus receptus underlying the KJV New Testament is primarily based on later Byzantine manuscripts. Which Renaissance scholar compiled the first published critical Greek New Testament in 1516?", options: ["John Calvin", "Desiderius Erasmus", "Martin Luther", "William Tyndale"], answer: "Desiderius Erasmus" },
           { q: "In Galatians 3:16, Paul argues about Abraham's 'seed' being singular, not plural. What Greek word for 'seed' (also used in LXX of Genesis) does Paul exploit for this argument?", options: ["sperma", "huios", "genos", "tekna"], answer: "sperma" },
           { q: "The ending of Mark's Gospel at 16:8 ('for they were afraid') is considered by most modern textual critics to be the original ending. What manuscript evidence supports that 16:9-20 is a later addition?", options: ["All manuscripts omit it", "Codex Sinaiticus and Codex Vaticanus both end at 16:8", "Only Latin manuscripts include it", "Only Syriac manuscripts omit it"], answer: "Codex Sinaiticus and Codex Vaticanus both end at 16:8" },
-          { q: "In the Pauline corpus, the term 'deutero-Pauline' refers to letters many scholars believe were written by later disciples using Paul's name. Which three are most commonly grouped as deutero-Pauline?", options: ["Galatians, Ephesians, Colossians", "Ephesians, Colossians, 2 Thessalonians", "1 Timothy, 2 Timothy, Titus (Pastorals)", "Ephesians, Colossians, Philemon"], answer: "1 Timothy, 2 Timothy, Titus (Pastorals)" },
+          { q: "The three letters 1 Timothy, 2 Timothy, and Titus share a distinct focus on church order and pastoral leadership. What collective name groups them together?", options: ["The Prison Epistles", "The Pastoral Epistles", "The General Epistles", "The Deutero-Pauline Epistles"], answer: "The Pastoral Epistles" },
         ],
       },
       'kings-prophets': {
@@ -1065,7 +1152,7 @@ body {
         ],
         'bob-stanberry': [
           { q: "The 'Two-Source Hypothesis' of Gospel origins holds that Matthew and Luke both independently used Mark and another source. What is the scholarly abbreviation for that second source?", options: ["M", "L", "Q (from German Quelle)", "Proto-Luke"], answer: "Q (from German Quelle)" },
-          { q: "In John 19:20, the inscription on the cross was written in three languages. Which three?", options: ["Hebrew, Greek, Latin", "Aramaic, Greek, Latin", "Hebrew, Aramaic, Latin", "Hebrew, Aramaic, Greek, Latin"], answer: "Hebrew, Aramaic, Latin" },
+          { q: "In John 19:20, the inscription on the cross was written in three languages. Which three?", options: ["Hebrew, Greek, Latin", "Aramaic, Greek, Latin", "Hebrew/Aramaic, Latin, Greek", "Hebrew, Aramaic, Latin only"], answer: "Hebrew/Aramaic, Latin, Greek" },
           { q: "The Greek term 'parousia' is used in eschatological passages about Jesus's return. What does this word literally mean in Greek?", options: ["Second coming", "Presence / arrival", "Glory", "Judgment"], answer: "Presence / arrival" },
           { q: "Matthew's genealogy of Jesus in chapter 1 is structured in three groups of 14 generations. In Jewish gematria, 14 is the numerical value of which Hebrew name?", options: ["Yeshua", "David (\u05D3\u05D5\u05D3)", "Abraham", "Israel"], answer: "David (\u05D3\u05D5\u05D3)" },
           { q: "The Pericope Adulterae (the story of the woman caught in adultery) in John 7:53-8:11 is absent from the earliest manuscripts. In which Gospel does it appear in some manuscript traditions as an alternate location?", options: ["Matthew after 21:17", "Mark after 12:17", "Luke after 21:38", "It only ever appears in John"], answer: "Luke after 21:38" },
@@ -1144,11 +1231,12 @@ body {
     }
 
     function escapeHtml(str) {
-      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
     // ─── 3. Constants + State ──────────────────────────────────────────────────
     const WIN_SCORE = 10;
+    const CONFETTI_COUNT = 50;
     const CATEGORIES = [
       { id: 'old-testament',  label: 'Old Testament',     emoji: '\u{1F4DC}' },
       { id: 'new-testament',  label: 'New Testament',      emoji: '\u2709\uFE0F' },
@@ -1189,13 +1277,16 @@ body {
     let audioCtx = null;
 
     function getAudioCtx() {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (!audioCtx) {
+        try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+      }
       return audioCtx;
     }
 
     function playTone(freq, duration, type = 'sine', volume = 0.3, startDelay = 0) {
       if (state.muted) return;
       const ctx = getAudioCtx();
+      if (!ctx) return;
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain);
@@ -1204,6 +1295,7 @@ body {
       osc.frequency.setValueAtTime(freq, ctx.currentTime + startDelay);
       gain.gain.setValueAtTime(volume, ctx.currentTime + startDelay);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startDelay + duration);
+      osc.onended = () => { osc.disconnect(); gain.disconnect(); };
       osc.start(ctx.currentTime + startDelay);
       osc.stop(ctx.currentTime + startDelay + duration + 0.05);
     }
@@ -1236,12 +1328,42 @@ body {
     }
     function toggleMute() {
       state.muted = !state.muted;
-      if (audioCtx) {
-        state.muted ? audioCtx.suspend() : audioCtx.resume();
+      if (audioCtx && audioCtx.state !== 'closed') {
+        (state.muted ? audioCtx.suspend() : audioCtx.resume()).catch(() => {});
       }
       if (bgMusic) bgMusic.muted = state.muted;
       const btn = document.getElementById('mute-btn');
       if (btn) btn.textContent = state.muted ? '\uD83D\uDD07' : '\uD83D\uDD0A';
+    }
+
+    const TERMINAL_LINES = [
+      '> SPACE BIBLE TRIVIA v2.0',
+      '> BRIDGEPOINT CHURCH NODE: ONLINE',
+      '> LOADING HOLY_SCRIPTURE_DATABASE........',
+      '> 0x4a6f686e203a3a2033313631362034',
+      '> GENESIS 1:1 >> AUTHORIZED',
+      '> PSALM 23:1 >> AUTHORIZED',
+      '> JOHN 3:16 >> AUTHORIZED',
+      '> REVELATION 22:21 >> AUTHORIZED',
+      '> DIVINE_MAINFRAME: CONNECTED',
+      '> QUANTUM_TRIVIA_ENGINE: INITIALIZED',
+      '> SCANNING 126 BIBLE_VERSES... [' + '\u2588'.repeat(12) + '] 100%',
+      '> SELECT DIFFICULTY: [HARD] [REALLY_HARD] [BOB_STANBERRY]',
+      '> MICHAEL.EXE STATUS: INFERIOR',
+      '> WARNING: BOB_STANBERRY_MODE CAUSES_EXISTENTIAL_CRISIS',
+      '> 01001000 01101111 01101100 01111001 00100000 01010011 01100011',
+      '> CROSS_REFERENCE_ENGINE: ACTIVE',
+      '> SCRIPTURE_HASH: 0xDEAD5C4EBEBIBLE',
+      '> ADMIN_PRIVILEGES: GRANTED',
+      '> TEAM_RIVALRY_MATRIX: LOADED',
+      '> ANSWER_VERIFICATION_PROTOCOL: ARMED',
+      '> KNOWLEDGE_INTEGRITY: 100%',
+      '> READY_FOR_DIVINE_COMPETITION.',
+      '',
+    ];
+    function terminalBgHtml() {
+      const text = [...TERMINAL_LINES, ...TERMINAL_LINES].join('\n');
+      return `<div class="terminal-bg" aria-hidden="true"><div class="terminal-scroll">${text}</div></div>`;
     }
 
     // ─── 5. renderSetup ────────────────────────────────────────────────────────
@@ -1249,39 +1371,42 @@ body {
       const app = document.getElementById('app');
       app.innerHTML = `
         <div class="setup-screen">
-          <div class="setup-logo-row">
-            <div class="bp-logo-wrap">
-              <img class="bp-logo" src="https://bridgepointbiblechurch.org/wp-content/uploads/2021/01/bridgepoint-logo.png"
-                alt="Bridgepoint Bible Church"
-                onerror="this.style.display='none';this.nextElementSibling.style.display='inline';">
-              <span class="bp-logo-fallback" style="display:none;">Bridgepoint Bible Church</span>
-            </div>
-          </div>
-          <h1 data-tooltip="Yes, it IS better than Michael&#39;s. We checked.">Space Bible Trivia</h1>
-          <p class="setup-tagline">The quiz that&#39;s definitively better than Michael&#39;s</p>
-          <div class="difficulty-row">
-            ${DIFFICULTIES.map(d => `
-              <div class="diff-card${state.difficulty === d.id ? ' selected' : ''}" data-id="${d.id}" title="${escapeHtml(d.tooltip)}">
-                <div class="diff-card-label">${escapeHtml(d.label)}</div>
-                <div class="diff-card-sub">${escapeHtml(d.tooltip.length > 40 ? d.tooltip.slice(0,40)+'...' : d.tooltip)}</div>
+          ${terminalBgHtml()}
+          <div class="setup-content">
+            <div class="setup-logo-row">
+              <div class="bp-logo-wrap">
+                <img class="bp-logo" src="https://bridgepointbiblechurch.org/wp-content/uploads/2021/01/bridgepoint-logo.png"
+                  alt="Bridgepoint Bible Church"
+                  onerror="this.style.display='none';this.nextElementSibling.style.display='inline';">
+                <span class="bp-logo-fallback" style="display:none;">Bridgepoint Bible Church</span>
               </div>
-            `).join('')}
-          </div>
-          <div class="team-inputs">
-            <div class="form-group">
-              <label for="team1-input">Team 1 Name</label>
-              <input id="team1-input" type="text" placeholder="Team 1" maxlength="20"
-                value="${escapeHtml(state.team1)}" style="border-color: var(--team1);">
             </div>
-            <div class="form-group">
-              <label for="team2-input">Team 2 Name</label>
-              <input id="team2-input" type="text" placeholder="Team 2" maxlength="20"
-                value="${escapeHtml(state.team2)}" style="border-color: var(--team2);">
+            <h1 data-tooltip="Yes, it IS better than Michael&#39;s. We checked.">Space Bible Trivia</h1>
+            <p class="setup-tagline">The quiz that&#39;s definitively better than Michael&#39;s</p>
+            <div class="difficulty-row">
+              ${DIFFICULTIES.map(d => `
+                <div class="diff-card${state.difficulty === d.id ? ' selected' : ''}" data-id="${d.id}" title="${escapeHtml(d.tooltip)}">
+                  <div class="diff-card-label">${escapeHtml(d.label)}</div>
+                  <div class="diff-card-sub">${escapeHtml(d.tooltip.length > 40 ? d.tooltip.slice(0,40)+'...' : d.tooltip)}</div>
+                </div>
+              `).join('')}
             </div>
+            <div class="team-inputs">
+              <div class="form-group">
+                <label for="team1-input">Team 1 Name</label>
+                <input id="team1-input" type="text" placeholder="Team 1" maxlength="20"
+                  value="${escapeHtml(state.team1)}" style="border-color: var(--team1);">
+              </div>
+              <div class="form-group">
+                <label for="team2-input">Team 2 Name</label>
+                <input id="team2-input" type="text" placeholder="Team 2" maxlength="20"
+                  value="${escapeHtml(state.team2)}" style="border-color: var(--team2);">
+              </div>
+            </div>
+            <button class="start-btn" id="start-btn" ${state.difficulty ? '' : 'disabled'}>
+              Start Game
+            </button>
           </div>
-          <button class="start-btn" id="start-btn" ${state.difficulty ? '' : 'disabled'}>
-            Start Game
-          </button>
         </div>
       `;
       bindEvents();
@@ -1332,6 +1457,30 @@ body {
     function renderCategoryBoard() {
       const app = document.getElementById('app');
       const pickingName = state.pickingTeam === 0 ? (state.team1 || 'Team 1') : (state.team2 || 'Team 2');
+
+      const allExhausted = CATEGORIES.every(cat => {
+        const used = state.usedQuestions[cat.id] ? state.usedQuestions[cat.id].size : 0;
+        const total = QUESTION_BANK[cat.id][state.difficulty].length;
+        return used >= total;
+      });
+
+      if (allExhausted) {
+        app.innerHTML = `
+          ${renderHeader()}
+          <div class="category-board">
+            <div class="category-board-title">No questions remaining!</div>
+            <div style="text-align:center;margin-top:1rem;color:var(--muted);font-size:1.1rem;">
+              All categories have been exhausted. Final scores above.
+            </div>
+            <div style="text-align:center;margin-top:2rem;">
+              <button class="play-again-btn" id="play-again-btn">Play Again</button>
+            </div>
+          </div>
+        `;
+        bindEvents();
+        return;
+      }
+
       app.innerHTML = `
         ${renderHeader()}
         <div class="category-board">
@@ -1473,7 +1622,7 @@ body {
       const confettiColors = [
         '#f59e0b','#3b82f6','#ef4444','#22c55e','#a855f7','#ec4899','#06b6d4','#f97316'
       ];
-      const confettiHtml = Array.from({ length: 50 }, (_, i) => {
+      const confettiHtml = Array.from({ length: CONFETTI_COUNT }, (_, i) => {
         const color = confettiColors[i % confettiColors.length];
         const size = 8 + Math.floor(Math.random() * 10);
         const left = Math.random() * 100;
@@ -1506,11 +1655,7 @@ body {
     }
 
     // ─── 10. Game Logic ────────────────────────────────────────────────────────
-    function startGame() {
-      const t1 = document.getElementById('team1-input')?.value.trim() || 'Team 1';
-      const t2 = document.getElementById('team2-input')?.value.trim() || 'Team 2';
-      state.team1 = t1;
-      state.team2 = t2;
+    function resetGameState() {
       state.scores = [0, 0];
       state.pickingTeam = 0;
       state.currentQuestion = null;
@@ -1518,6 +1663,15 @@ body {
       state.teamAnswers = [null, null];
       state.usedQuestions = {};
       state.wrongFlavorIndex = 0;
+      state.buzzedTeam = null;
+    }
+
+    function startGame() {
+      const t1 = document.getElementById('team1-input')?.value.trim() || 'Team 1';
+      const t2 = document.getElementById('team2-input')?.value.trim() || 'Team 2';
+      state.team1 = t1;
+      state.team2 = t2;
+      resetGameState();
       state.phase = 'category-board';
       initBgMusic();
       render();
@@ -1611,8 +1765,9 @@ body {
       const app = document.getElementById('app');
       app.innerHTML = `
         <div class="splash-screen">
-          <div class="splash-question">Are you ready?</div>
-          <div class="splash-buttons">
+          ${terminalBgHtml()}
+          <div class="splash-question" style="position:relative;z-index:1;">Are you ready?</div>
+          <div class="splash-buttons" style="position:relative;z-index:1;">
             <button class="splash-yes" id="splash-yes">Yes</button>
             <button class="splash-no" id="splash-no">No</button>
           </div>
@@ -1633,13 +1788,14 @@ body {
 
     function render() {
       switch (state.phase) {
-        case 'splash':         renderSplash();        break;
-        case 'laser-reveal':   renderLaserMike();     break;
-        case 'setup':          renderSetup();         break;
-        case 'category-board': renderCategoryBoard(); break;
+        case 'splash':          renderSplash();         break;
+        case 'laser-reveal':    renderLaserMike();      break;
+        case 'setup':           renderSetup();          break;
+        case 'category-board':  renderCategoryBoard();  break;
         case 'question':        renderQuestion();       break;
         case 'question-reveal': renderQuestionReveal(); break;
-        case 'win':            renderWin();           break;
+        case 'win':             renderWin();            break;
+        default:                state.phase = 'setup'; renderSetup(); break;
       }
     }
 
@@ -1676,6 +1832,7 @@ body {
       document.getElementById('continue-btn')?.addEventListener('click', handleContinue);
 
       document.getElementById('play-again-btn')?.addEventListener('click', () => {
+        resetGameState();
         state.phase = 'setup';
         render();
       });
@@ -1683,7 +1840,7 @@ body {
       document.getElementById('mute-btn')?.addEventListener('click', toggleMute);
 
       document.getElementById('splash-yes')?.addEventListener('click', () => {
-        sessionStorage.setItem('gameReady', '1');
+        try { sessionStorage.setItem('gameReady', '1'); } catch(e) {}
         state.phase = 'laser-reveal';
         render();
       });
@@ -1693,8 +1850,26 @@ body {
       });
     }
 
-    // ─── 12. Kick off ──────────────────────────────────────────────────────────
-    state.phase = sessionStorage.getItem('gameReady') ? 'setup' : 'splash';
+    // ─── 12. Starfield + Kick off ─────────────────────────────────────────────
+    (function createStarfield() {
+      const sf = document.createElement('div');
+      sf.id = 'starfield';
+      for (let i = 0; i < 90; i++) {
+        const s = document.createElement('div');
+        s.className = 'star';
+        s.style.left = (Math.random() * 100).toFixed(2) + '%';
+        s.style.top  = (Math.random() * 100).toFixed(2) + '%';
+        s.style.setProperty('--dur', (3 + Math.random() * 7).toFixed(1) + 's');
+        s.style.setProperty('--del', (Math.random() * 10).toFixed(1) + 's');
+        if (Math.random() < 0.15) { s.style.width = '2px'; s.style.height = '2px'; }
+        sf.appendChild(s);
+      }
+      document.body.insertBefore(sf, document.getElementById('app'));
+    })();
+
+    let gameReady = false;
+    try { gameReady = !!sessionStorage.getItem('gameReady'); } catch(e) {}
+    state.phase = gameReady ? 'setup' : 'splash';
     render();
   </script>
 </body>

@@ -182,6 +182,26 @@ Background: animated radial gradient (slow pulse between dark navy and deep purp
 
 ---
 
+## Audio
+
+### Background Music
+- `<audio>` element, looping, started on Start Game click (satisfies browser autoplay policy)
+- Royalty-free upbeat/triumphant track from a public CDN URL
+- Mute/unmute toggle button (🔊/🔇) fixed in top-right corner during game
+- Volume: 0.3 (background, not distracting)
+
+### Sound Effects (Web Audio API — no external files)
+Generated via `AudioContext` oscillators/buffers:
+- **Buzz-in click**: short 200ms tick (square wave, 440Hz)
+- **Correct answer**: ascending two-tone chime (C5→E5, 150ms each)
+- **Wrong answer**: descending buzz (square wave, 200Hz→150Hz, 300ms)
+- **Point scored**: bright ascending arpeggio (C5, E5, G5, C6 — 80ms each)
+- **Win fanfare**: full triumphant arpeggio (C4→E4→G4→C5→E5→G5→C6, 100ms each)
+
+All sound effects triggered at the relevant game events. AudioContext created lazily on first user interaction.
+
+---
+
 ## Branding
 
 ### Bridgepoint Bible Church
